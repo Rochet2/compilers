@@ -33,6 +33,36 @@ namespace compilers1
 			"assert",
 		};
 
+		public void skipTo(char c)
+		{
+			while (pos < input.Length && input[pos] != c)
+				++pos;
+			--pos;
+		}
+
+		public void skipToNext()
+		{
+			while (pos < input.Length &&
+				!Char.IsPunctuation(input[pos]) &&
+				!Char.IsWhiteSpace(input[pos]) &&
+				!Char.IsSeparator(input[pos])
+			)
+				++pos;
+			--pos;
+		}
+
+		public void error(string fmt, params object[] args)
+		{
+			string msg = String.Format (fmt, args);
+			Console.WriteLine ("Lexer error at {0}: {1}", pos, msg);
+		}
+
+		public void abort(string fmt, params object[] args)
+		{
+			string msg = String.Format (fmt, args);
+			throw new LexEx(String.Format("Lexer aborted at {0}: {1}", pos, msg));
+		}
+
 		public int find (string input, string s, int pos = 0)
 		{
 			return input.IndexOf (s, Math.Min (pos, input.Length - 1));
@@ -66,7 +96,7 @@ namespace compilers1
 		{
 			int i = pos;
 			if (!Char.IsDigit (input [i]))
-				throw new LexEx("number expected");
+				abort("number expected");
 			for (; i < input.Length; ++i)
 				if (!Char.IsDigit (input [i]))
 					break;
@@ -87,7 +117,7 @@ namespace compilers1
 				if (input [i] == '"')
 					break;
 				if (i == input.Length - 1)
-					throw new LexEx ("unexpected end of a string");
+					abort ("unexpected end of a string");
 			}
 			string s = input.Substring (start, i - start);
 			s = s.Replace ("\\\\", "\\").Replace ("\\\"", "\"");
@@ -111,13 +141,13 @@ namespace compilers1
 		{
 			int start = pos + 2; // skip comment start
 			if (start == input.Length - 1)
-				throw new LexEx ("unexpected end of a blockcomment");
+				abort ("unexpected end of a blockcomment");
 
 			int end = input.IndexOf ("*/", start);
 			int substart = input.IndexOf ("/*", start);
 			while (true) {
 				if (end < start) // cannot find end
-					throw new LexEx ("Unexpected end of blockcomment");
+					abort ("Unexpected end of blockcomment");
 				if (substart < start || end < substart)
 					break; // found end
 				// have nested blockcomment, find again
@@ -133,7 +163,7 @@ namespace compilers1
 		{
 			int start = pos;
 			if (!Char.IsLetter (input [start]))
-				throw new LexEx ("Identifier must start with a letter");
+				abort ("Identifier must start with a letter");
 			int end = start;
 			for (; end < input.Length; ++end) {
 				char c = input [end];
@@ -187,7 +217,7 @@ namespace compilers1
 			} else if (Char.IsWhiteSpace (current)) {
 				// skip
 			} else {
-				throw new LexEx (String.Format ("Unrecognized tokens {0}{1} at index {2}", current, next, pos));
+				error (String.Format ("Unrecognized tokens {0}{1} at index {2}", current, next, pos));
 			}
 			++pos;
 		}
