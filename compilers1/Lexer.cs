@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace compilers1
 {
@@ -12,8 +13,10 @@ namespace compilers1
 
 	public class Lexer
 	{
-		Lexer (Input input) {
+		public Lexer(string input)
+		{
 			this.input = input;
+			this.pos = 0;
 		}
 
 		public static List<string> keywords = new List<string> {
@@ -58,18 +61,21 @@ namespace compilers1
 			return -1;
 		}
 
-		public int expectnumber (int pos, string input)
+		// %d+
+		public void expectnumber ()
 		{
 			int i = pos;
+			if (!Char.IsDigit (input [i]))
+				throw new LexEx("number expected");
 			for (; i < input.Length; ++i)
 				if (!Char.IsDigit (input [i]))
 					break;
 			string s = input.Substring (pos, i - pos);
 			lexed.Add (new Lexeme (Type.NUMBER, pos, s));
-			return i - 1;
+			pos = i - 1;
 		}
 
-		public int expectstring (int pos, string input)
+		public void expectstring ()
 		{
 			int start = pos + 1; // skip first quote
 			int i = start;
@@ -86,10 +92,10 @@ namespace compilers1
 			string s = input.Substring (start, i - start);
 			s = s.Replace ("\\\\", "\\").Replace ("\\\"", "\"");
 			lexed.Add (new Lexeme (Type.STRING, pos, s, i));
-			return i;
+			pos = i;
 		}
 
-		public int expectcomment (int pos, string input)
+		public void expectcomment ()
 		{
 			int start = pos + 2; // skip comment start
 			int end = start;
@@ -98,10 +104,10 @@ namespace compilers1
 					break;
 			string s = input.Substring (start, end - start);
 			lexed.Add (new Lexeme (Type.COMMENT, pos, s, end));
-			return end;
+			pos = end;
 		}
 
-		public int expectblockcomment (int pos, string input)
+		public void expectblockcomment ()
 		{
 			int start = pos + 2; // skip comment start
 			if (start == input.Length - 1)
@@ -120,10 +126,10 @@ namespace compilers1
 			}
 			string s = input.Substring (start, end - start);
 			lexed.Add (new Lexeme (Type.BLOCKCOMMENT, pos, s, end + 1));
-			return end + 1;
+			pos = end + 1;
 		}
 
-		public int expectidentifierorkeyword (int pos, string input)
+		public void expectidentifierorkeyword ()
 		{
 			int start = pos;
 			if (!Char.IsLetter (input [start]))
@@ -136,63 +142,83 @@ namespace compilers1
 			}
 			string s = input.Substring (start, end - start);
 			lexed.Add (new Lexeme (keywords.Contains (s) ? Type.KEYWORD : Type.IDENTIFIER, pos, s));
-			return end - 1;
+			pos = end - 1;
 		}
 
-		public void Lex (string input)
+		public void lexnext()
 		{
-			char current = ' ';
-			char next = ' ';
-			int i = 0;
-			for (; i >= 0 && i + 1 < input.Length; ++i) {
-				// Console.Out.WriteLine (i); // debug
-				current = input [i];
-				next = input [i + 1];
+			char current = input [pos];
+			char next = input [pos + 1];
 
-				if (current == '/' && next == '/') {
-					i = expectcomment (i, input);
-				} else if (current == '/' && next == '*') {
-					i = expectblockcomment (i, input);
-				} else if (Char.IsLetter (current)) {
-					i = expectidentifierorkeyword (i, input);
-				} else if (
-					current == ':' && next == '=') {
-					lexed.Add (new Lexeme (Type.SEPARATOR, i, current.ToString () + next.ToString ()));
-					++i;
-				} else if (
-					current == '.' && next == '.') {
-					lexed.Add (new Lexeme (Type.SEPARATOR, i, current.ToString () + next.ToString ()));
-					++i;
-				} else if (
-					current == ':' ||
-					current == '(' ||
-					current == ')' ||
-					current == ';') {
-					lexed.Add (new Lexeme (Type.SEPARATOR, i, current.ToString ()));
-				} else if (
-					current == '<' ||
-					current == '=' ||
-					current == '!' ||
-					current == '&' ||
-					current == '+' ||
-					current == '-' ||
-					current == '/' ||
-					current == '*') {
-					lexed.Add (new Lexeme (Type.OPERATOR, i, current.ToString ()));
-				} else if (Char.IsDigit (current)) {
-					i = expectnumber (i, input);
-				} else if (current == '"') {
-					i = expectstring (i, input);
-				} else if (Char.IsWhiteSpace (current)) {
-					continue;
-				} else {
-					throw new LexEx (String.Format ("Unrecognized tokens {0}{1} at index {2}", current, next, i));
-				}
+			if (current == '/' && next == '/') {
+				expectcomment ();
+			} else if (current == '/' && next == '*') {
+				expectblockcomment ();
+			} else if (Char.IsLetter (current)) {
+				expectidentifierorkeyword ();
+			} else if (
+				current == ':' && next == '=') {
+				lexed.Add (new Lexeme (Type.SEPARATOR, pos, current.ToString () + next.ToString ()));
+				++pos;
+			} else if (
+				current == '.' && next == '.') {
+				lexed.Add (new Lexeme (Type.SEPARATOR, pos, current.ToString () + next.ToString ()));
+				++pos;
+			} else if (
+				current == ':' ||
+				current == '(' ||
+				current == ')' ||
+				current == ';') {
+				lexed.Add (new Lexeme (Type.SEPARATOR, pos, current.ToString ()));
+			} else if (
+				current == '<' ||
+				current == '=' ||
+				current == '!' ||
+				current == '&' ||
+				current == '+' ||
+				current == '-' ||
+				current == '/' ||
+				current == '*') {
+				lexed.Add (new Lexeme (Type.OPERATOR, pos, current.ToString ()));
+			} else if (Char.IsDigit (current)) {
+				expectnumber ();
+			} else if (current == '"') {
+				expectstring ();
+			} else if (Char.IsWhiteSpace (current)) {
+				// skip
+			} else {
+				throw new LexEx (String.Format ("Unrecognized tokens {0}{1} at index {2}", current, next, pos));
+			}
+			++pos;
+		}
+
+		public void lexall ()
+		{
+			while (pos >= 0 && pos + 1 < input.Length) {
+				// Console.Out.WriteLine (i); // debug
+				lexnext();
 			}
 		}
 
-		Input input;
+		public bool hasnext()
+		{
+			return lexed.Count > 0;
+		}
+
+		public Lexeme next()
+		{
+			if (!hasnext ())
+				lexnext ();
+			if (!hasnext ())
+				return null;
+			Lexeme l = lexed[0];
+			lexed.RemoveAt(0);
+			return l;
+		}
+
 		public List<Lexeme> lexed = new List<Lexeme> ();
+		int pos;
+		string input;
 	}
 }
 

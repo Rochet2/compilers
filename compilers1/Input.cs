@@ -33,6 +33,11 @@ namespace compilers1
 			return pos < input.Length;
 		}
 
+		public int nextpos ()
+		{
+			return pos;
+		}
+
 		public char next ()
 		{
 			if (pos >= input.Length)
@@ -40,7 +45,7 @@ namespace compilers1
 			return input [pos++];
 		}
 
-		string input = "";
+		public string input = "";
 		int pos = 0;
 	}
 }

@@ -5,14 +5,24 @@ namespace compilers1
 {
 	public class Parser
 	{
-		public Parser ()
+		public Parser (Lexer lexer)
 		{
+			this.lexer = lexer;
 		}
 
-		public void Parse(List<Lexeme> lexed)
+		void skip(string tok)
 		{
-			lexed [0].ToString();
+			Lexeme l = lexer.next ();
+			if (l.s == tok)
+				return;
 		}
+
+		public void Parse()
+		{
+			
+		}
+
+		Lexer lexer;
 	}
 }
 
