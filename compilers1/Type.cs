@@ -15,4 +15,3 @@ namespace compilers1
 		BLOCKCOMMENT,
 	}
 }
-

@@ -6,46 +6,76 @@ namespace compilers1
 {
 	public class Input
 	{
-		public Input ()
+		public Input (System.IO.Stream stream)
 		{
-			Read ();
+			this.stream = stream;
+			for (int i = 0; i < buff.Length; ++i)
+				Next ();
+			pos = new Pos ();
 		}
 
-		public Input (string s)
+		public bool Has ()
 		{
-			this.input = s;
+			return buff [0] >= 0;
 		}
 
-		public void Read ()
+		public bool HasNext ()
 		{
-			this.input = "";
-			this.pos = 0;
-			string path = @"input.txt";
-			try {
-				input = File.ReadAllText (path);
-			} catch (System.IO.IOException e) {
-				Console.WriteLine ("Error reading file {1}: {0}", e.ToString (), path);
+			return buff [1] >= 0;
+		}
+
+		public bool Next ()
+		{
+			int previous = buff [0];
+			for (int i = 1; i < buff.Length; ++i)
+				buff [i - 1] = buff [i];
+			buff [buff.Length - 1] = stream.ReadByte ();
+
+			++pos.pos;
+			++pos.col;
+			if (previous == '\n') {
+				++pos.line;
+				pos.col = 1;
+			}
+			return buff [0] >= 0;
+		}
+
+		public char Peek (int idx = 0)
+		{
+			if (idx >= buff.Length)
+				throw new IndexOutOfRangeException ("invalid peek index");
+			return Convert.ToChar (buff [idx]);
+		}
+
+		public char PeekNext ()
+		{
+			return Peek (1);
+		}
+
+		public Pos GetPos ()
+		{
+			return pos.Copy ();
+		}
+
+		public class Pos
+		{
+			public int pos = 0;
+			public int line = 1;
+			public int col = 1;
+
+			public Pos Copy ()
+			{
+				return (Pos)this.MemberwiseClone ();
+			}
+
+			public override string ToString ()
+			{
+				return string.Format ("{0,3}:{1,-3}", line, col);
 			}
 		}
 
-		public bool hasnext ()
-		{
-			return pos < input.Length;
-		}
-
-		public int nextpos ()
-		{
-			return pos;
-		}
-
-		public char next ()
-		{
-			if (pos >= input.Length)
-				throw new IndexOutOfRangeException ("Input end reached");
-			return input [pos++];
-		}
-
-		public string input = "";
-		int pos = 0;
+		Pos pos = new Pos ();
+		int[] buff = new int[2];
+		System.IO.Stream stream;
 	}
 }

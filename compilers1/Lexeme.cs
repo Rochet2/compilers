@@ -6,15 +6,13 @@ namespace compilers1
 	{
 		public Type t;
 		public string s;
-		public int start;
-		public int end;
+		public Input.Pos pos;
 
-		public Lexeme (Type t, int start, string s, int end = -1)
+		public Lexeme (Type t, Input.Pos pos, string s)
 		{
 			this.t = t;
 			this.s = s;
-			this.start = start;
-			this.end = end < 0 ? start + s.Length : end;
+			this.pos = pos;
 		}
 
 		public override string ToString ()
@@ -22,8 +20,7 @@ namespace compilers1
 			int len = 0;
 			foreach (string name in Enum.GetNames(typeof(Type)))
 				len = Math.Max (len, name.Length);
-			return String.Format ("{0,"+len.ToString()+"} from: {1,-3} to: {2,-3} len: {4,-3} token: \"{3}\"", t, start, end, s, s.Length);
+			return String.Format ("{0," + len.ToString () + "} pos: {1} len: {2,-3} token: \"{3}\"", t, pos.ToString (), s.Length, s);
 		}
 	}
 }
-

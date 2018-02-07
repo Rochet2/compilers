@@ -10,14 +10,14 @@ namespace compilers1
 			this.lexer = lexer;
 		}
 
-		void skip(string tok)
+		void skip (string tok)
 		{
 			Lexeme l = lexer.next ();
 			if (l.s == tok)
 				return;
 		}
 
-		public void Parse()
+		public void Parse ()
 		{
 			
 		}

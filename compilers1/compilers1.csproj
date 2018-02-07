@@ -40,6 +40,7 @@
     <Compile Include="Lexeme.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Parser.cs" />
+    <Compile Include="TokenParser.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
