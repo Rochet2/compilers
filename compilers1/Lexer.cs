@@ -24,6 +24,8 @@ namespace compilers1
 
 		public void lexnext ()
 		{
+			if (!input.Has ())
+				return;
 			char current = input.Peek ();
 			char next = input.HasNext () ? input.PeekNext () : ' ';
 
@@ -44,9 +46,9 @@ namespace compilers1
 				input.Next ();
 				input.Next ();
 			} else if (
-				current == ':' ||
 				current == '(' ||
 				current == ')' ||
+				current == ':' ||
 				current == ';') {
 				lexed.Add (new Lexeme (Type.SEPARATOR, input.GetPos (), current.ToString ()));
 				input.Next ();

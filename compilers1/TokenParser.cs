@@ -89,7 +89,9 @@ namespace compilers1
 			string s = "";
 			if (input.Has ()) {
 				do {
-					if (input.Peek () == '\\') {
+					if (input.Peek () == '\\' &&
+						(input.PeekNext () == '\\' ||
+							input.PeekNext () == '"')) {
 						// skip escape character
 						input.Next ();
 						s += input.Peek ();

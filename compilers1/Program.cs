@@ -31,12 +31,14 @@ namespace compilers1
 			Debug.Assert (new TokenParser (ToInput ("/*comment/*nested*/*/")).expectblockcomment ().s == "comment/*nested*/", "blockcomment parsing invalid");
 			Debug.Assert (new TokenParser (ToInput ("/*/*/**//**/*/*//**/")).expectblockcomment ().s == "/*/**//**/*/", "blockcomment parsing invalid");
 			Input input = new Input (File.Open ("input.txt", FileMode.Open));
-			Lexer lexer = new Lexer (input);
+			Lexer lexer = new Lexer (input); // (ToInput ("var x : int := 45+5;print x+1;"));
 			lexer.lexall ();
 			foreach (Lexeme l in lexer.lexed)
 				Console.WriteLine (l.ToString ());
 			Parser parser = new Parser (lexer);
-			parser.Parse ();
+			AST ast = parser.Parse ();
+			Interpreter inter = new Interpreter (ast);
+			inter.visit ();
 		}
 	}
 }
