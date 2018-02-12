@@ -35,14 +35,17 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Type.cs" />
-    <Compile Include="Lexer.cs" />
-    <Compile Include="Lexeme.cs" />
-    <Compile Include="Input.cs" />
-    <Compile Include="Parser.cs" />
-    <Compile Include="TokenParser.cs" />
-    <Compile Include="AST.cs" />
-    <Compile Include="Interpreter.cs" />
+    <Compile Include="sources\AST.cs" />
+    <Compile Include="sources\Input.cs" />
+    <Compile Include="sources\Interpreter.cs" />
+    <Compile Include="sources\Lexeme.cs" />
+    <Compile Include="sources\Lexer.cs" />
+    <Compile Include="sources\Parser.cs" />
+    <Compile Include="sources\TokenParser.cs" />
+    <Compile Include="sources\Type.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="sources\" />
+  </ItemGroup>
 </Project>
