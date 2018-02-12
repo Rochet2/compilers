@@ -22,8 +22,7 @@ namespace compilers1
 
 		void next ()
 		{
-			curr_tok = next_tok;
-			next_tok = lexer.next ();
+			curr_tok = lexer.next ();
 		}
 
 		void eat (string s)
@@ -92,15 +91,34 @@ namespace compilers1
 			return new AstType (tok.s);
 		}
 
+		AST UNARY ()
+		{
+			var v = new AstUnary ();
+			var tok = curr_tok;
+			eat (Type.OPERATOR);
+			v.op = tok.s;
+			v.v = OPND ();
+			return v;
+		}
+
+		AST BINOP ()
+		{
+			var v = new BinOp ();
+			var tok = curr_tok;
+			eat (Type.OPERATOR);
+			v.op = tok.s;
+			v.r = OPND ();
+			return v;
+		}
+
 		AST OPND ()
 		{
-			var tok = curr_tok;
-			switch (tok.t) {
+			switch (curr_tok.t) {
 			case Type.SEPARATOR:
 				{
-					eat ("(");
+					eat ("(", Type.SEPARATOR);
 					var node = EXPR ();
-					eat (")");
+					eat (")", Type.SEPARATOR);
 					return node;
 				}
 			case Type.NUMBER:
@@ -110,51 +128,59 @@ namespace compilers1
 			case Type.IDENTIFIER:
 				return IDENT ();
 			}
-			throw new ParEx ("OPND", tok);
+			throw new ParEx ("OPND", curr_tok);
+		}
+
+		AST EXPRTAIL ()
+		{
+			if (istype (Type.OPERATOR))
+				return BINOP ();
+			return null;
 		}
 
 		AST EXPR ()
 		{
-			var tok = curr_tok;
-			if (tok.t == Type.OPERATOR) {
-				eat (Type.OPERATOR);
-				return new AstUnary (tok.s, OPND ());
-			}
-			var opnd = OPND ();
-			tok = curr_tok;
-			if (!istype (Type.OPERATOR))
-				return opnd;
-			eat (Type.OPERATOR);
-			return new BinOp (opnd, tok.s, OPND ());
+			if (istype (Type.OPERATOR))
+				return UNARY ();
+			var v = new AstExpr ();
+			v.lopnd = OPND ();
+			v.rtail = EXPRTAIL ();
+			return v;
 		}
 
 		AST PRINT ()
 		{
-			eat ("print");
-			AST toprint = EXPR ();
-			return new AstPrint (toprint);
+			eat ("print", Type.KEYWORD);
+			return new AstPrint (EXPR ());
 		}
 
 		AST ASSERT ()
 		{
-			eat ("assert");
-			eat ("(");
-			AST cond = EXPR ();
-			eat (")");
-			return new AstAssert (cond);
+			var v = new AstAssert ();
+			eat ("assert", Type.KEYWORD);
+			eat ("(", Type.SEPARATOR);
+			v.cond = EXPR ();
+			eat (")", Type.SEPARATOR);
+			return v;
+		}
+
+		AST VARTAIL ()
+		{
+			if (istype (":=", Type.SEPARATOR)) {
+				eat (":=", Type.SEPARATOR);
+				return EXPR ();
+			}
+			return null;
 		}
 
 		AST VAR ()
 		{
 			var v = new AstVar ();
-			eat ("var");
+			eat ("var", Type.KEYWORD);
 			v.ident = IDENT ().name;
-			eat (":");
+			eat (":", Type.SEPARATOR);
 			v.type = TYPE ();
-			if (istype (":=", Type.SEPARATOR)) {
-				eat (":=", Type.SEPARATOR);
-				v.value = EXPR ();
-			}
+			v.value = VARTAIL ();
 			return v;
 		}
 
@@ -169,31 +195,30 @@ namespace compilers1
 
 		AST READ ()
 		{
-			eat ("read");
+			eat ("read", Type.KEYWORD);
 			return new AstRead (IDENT ().name);
 		}
 
 		AST FORLOOP ()
 		{
 			var v = new AstForLoop ();
-			eat ("for");
+			eat ("for", Type.KEYWORD);
 			v.ident = IDENT ().name;
-			eat ("in");
+			eat ("in", Type.KEYWORD);
 			v.begin = EXPR ();
 			eat ("..", Type.SEPARATOR);
 			v.end = EXPR ();
-			eat ("do");
+			eat ("do", Type.KEYWORD);
 			v.stmts = STMTS ();
-			eat ("end");
-			eat ("for");
+			eat ("end", Type.KEYWORD);
+			eat ("for", Type.KEYWORD);
 			return v;
 		}
 
 		AST STMT ()
 		{
-			var tok = curr_tok;
-			if (tok.t == Type.KEYWORD) {
-				switch (tok.s) {
+			if (istype (Type.KEYWORD)) {
+				switch (curr_tok.s) {
 				case "read":
 					return  READ ();
 				case "assert":
@@ -204,37 +229,46 @@ namespace compilers1
 					return VAR ();
 				case "for":
 					return FORLOOP ();
+				case "end":
+					return null;
 				}
 			}
-			if (tok.t == Type.IDENTIFIER)
+			if (istype (Type.IDENTIFIER))
 				return ASSIGN ();
-			throw new ParEx ("STMT", tok);
+			throw new ParEx ("STMT", curr_tok);
+		}
+
+		AST STMTSTAIL ()
+		{
+			if (curr_tok == null)
+				return null;
+			return STMTS ();
 		}
 
 		AST STMTS ()
 		{
 			var stmts = new AstStmts ();
-			stmts.stmts.Add (STMT ());
+			stmts.stmt = STMT ();
+
+			if (stmts.stmt == null)
+				return null;
+
 			eat (";", Type.SEPARATOR);
-			while (istype (Type.KEYWORD)) {
-				if (istype ("end"))
-					break;
-				stmts.stmts.Add (STMT ());
-				eat (";", Type.SEPARATOR);
-			}
+			stmts.stmttail = STMTSTAIL ();
 			return stmts;
 		}
 
 		public AST Parse ()
 		{
-			next ();
-			next ();
-			return STMTS ();
+			next (); // get first token
+			AST ast = STMTS ();
+			if (curr_tok != null)
+				throw new ParEx ("unexpected token after program end", curr_tok);
+			return ast;
 		}
 
 		Lexer lexer;
 		Lexeme curr_tok = null;
-		Lexeme next_tok = null;
 	}
 }
 

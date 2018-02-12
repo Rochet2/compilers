@@ -80,7 +80,7 @@ namespace compilers1
 			return new Lexeme (Type.COMMENT, pos, s);
 		}
 
-		// ???
+		// "(\\.|([^"]))"
 		public Lexeme expectstring ()
 		{
 			Input.Pos pos = input.GetPos ();
@@ -89,16 +89,19 @@ namespace compilers1
 			string s = "";
 			if (input.Has ()) {
 				do {
-					if (input.Peek () == '\\' &&
-						(input.PeekNext () == '\\' ||
-							input.PeekNext () == '"')) {
+					if (input.Peek () == '\\') {
 						// skip escape character
+						s += input.Peek ();
 						input.Next ();
 						s += input.Peek ();
 						continue;
 					}
 					if (input.Peek () == '"') {
 						input.Next ();
+						// Handle escape characters, for example convert \n to a newline
+						// I used the regex package here since I didnt want to hardcode
+						// the cases for no real reason to the IF above. This way the system is more flexible
+						s = System.Text.RegularExpressions.Regex.Unescape(s);
 						return new Lexeme (Type.STRING, pos, s);
 					}
 					s += input.Peek ();
@@ -107,7 +110,8 @@ namespace compilers1
 			throw new LexEx ("unexpected end of string", input.GetPos ());
 		}
 
-		// ???
+		// comment := "/*" commentend
+		// commentend := ([^/][^*] | comment) "*/"
 		public Lexeme expectblockcomment ()
 		{
 			Input.Pos pos = input.GetPos ();
@@ -143,6 +147,7 @@ namespace compilers1
 			throw new LexEx ("unexpected end of blockcomment", input.GetPos ());
 		}
 
+		// [\a_][\a\d_]
 		public Lexeme expectidentifierorkeyword ()
 		{
 			Input.Pos pos = input.GetPos ();

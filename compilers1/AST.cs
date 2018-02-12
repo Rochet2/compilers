@@ -19,6 +19,7 @@ namespace compilers1
 		VAR,
 		ASSIGN,
 		FORLOOP,
+		EXPR,
 	}
 
 	public class AST
@@ -40,19 +41,26 @@ namespace compilers1
 		public abstract object Value ();
 	}
 
-	public class BinOp : AST
+	public class AstExpr : AST
 	{
-		public BinOp (AST l, string op, AST r) :
-			base (ASTType.BINOP)
+		public AstExpr () :
+		base (ASTType.EXPR)
 		{
-			this.l = l;
-			this.r = r;
-			this.op = op;
 		}
 
-		public AST l;
-		public AST r;
+		public AST lopnd;
+		public AST rtail;
+	}
+
+	public class BinOp : AST
+	{
+		public BinOp () :
+		base (ASTType.BINOP)
+		{
+		}
+
 		public string op;
+		public AST r;
 	}
 
 	public class AstNumber : Printable
@@ -139,10 +147,9 @@ namespace compilers1
 
 	public class AstAssert : AST
 	{
-		public AstAssert (AST cond) :
+		public AstAssert () :
 		base (ASTType.ASSERT)
 		{
-			this.cond = cond;
 		}
 
 		public AST cond;
@@ -150,11 +157,9 @@ namespace compilers1
 
 	public class AstUnary : AST
 	{
-		public AstUnary (string op, AST v) :
+		public AstUnary () :
 			base (ASTType.UOP)
 		{
-			this.op = op;
-			this.v = v;
 		}
 
 		public string op;
@@ -179,7 +184,8 @@ namespace compilers1
 		{
 		}
 
-		public List<AST> stmts = new List<AST>();
+		public AST stmt;
+		public AST stmttail;
 	}
 
 	public class AstVar : AST

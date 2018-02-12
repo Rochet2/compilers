@@ -1,0 +1,17 @@
+Verify at http://smlweb.cpsc.ucalgary.ca/start.html
+when verifying change := to :q and .. to dd
+
+STMTS -> STMT ; STMTSTAIL.
+STMTSTAIL -> STMTS | .
+STMT -> var IDENT : TYPE VARTAIL | IDENT := EXPR | for IDENT in EXPR .. EXPR do STMTS end for | read IDENT | print EXPR | assert ( EXPR ).
+VARTAIL -> := EXPR | .
+EXPR -> OPND EXPRTAIL | UNARYOP OPND.
+EXPRTAIL -> OP OPND | .
+OPND -> INT | STRING | IDENT | ( EXPR ).
+TYPE -> int | string.
+INT -> intliteral.
+STRING -> stringliteral.
+IDENT -> identifier.
+UNARYOP -> unaryop.
+OP -> op.
+
