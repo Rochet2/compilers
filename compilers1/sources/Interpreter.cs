@@ -14,15 +14,16 @@ namespace compilers1
 
 	public class Interpreter
 	{
-		public Interpreter (AST ast)
+		public Interpreter (AST ast, IO io)
 		{
+			this.io = io;
 			this.ast = ast;
 			this.visitors.Add (ASTType.NUMBER, x => x);
 			this.visitors.Add (ASTType.STRING, x => x);
 			this.visitors.Add (ASTType.BOOLEAN, x => x);
-			this.visitors.Add (ASTType.TYPE, x => x);
-			this.visitors.Add (ASTType.UOP, x => {
-				var op = x as AstUnary;
+			this.visitors.Add (ASTType.TYPENAME, x => x);
+			this.visitors.Add (ASTType.UNARYOP, x => {
+				var op = x as AstUnaryOperator;
 				var opv = visit (op.v) as AstBool;
 				switch (op.op) {
 				case "!":
@@ -33,7 +34,7 @@ namespace compilers1
 			this.visitors.Add (ASTType.EXPR, x => {
 				var exp = x as AstExpr;
 				var opl = visit (exp.lopnd);
-				var rtail = exp.rtail as BinOp;
+				var rtail = exp.rtail as BinaryOperator;
 				if (rtail == null)
 					return opl;
 				var opr = visit (rtail.r);
@@ -84,11 +85,11 @@ namespace compilers1
 			this.visitors.Add (ASTType.PRINT, x => {
 				var f = x as AstPrint;
 				var v = this.visit (f.toprint) as Printable;
-				Console.Write ("{0}", v.Value ());
+				io.Write ("{0}", v.Value ());
 				return null;
 			});
-			this.visitors.Add (ASTType.STMTS, x => {
-				var v = x as AstStmts;
+			this.visitors.Add (ASTType.STATEMENTS, x => {
+				var v = x as AstStatements;
 				this.visit (v.stmt);
 				if (v.stmttail != null)
 					this.visit (v.stmttail);
@@ -98,7 +99,7 @@ namespace compilers1
 				var f = x as AstAssert;
 				var c = this.visit (f.cond) as AstBool;
 				if (!c.v)
-					Console.WriteLine ("Assertion failed");
+					io.WriteLine ("Assertion failed");
 				return null;
 			});
 			this.visitors.Add (ASTType.READ, x => {
@@ -122,14 +123,14 @@ namespace compilers1
 				return null;
 			});
 			this.visitors.Add (ASTType.IDENTIFIER, x => {
-				var v = x as AstIdent;
+				var v = x as AstIdentifier;
 				return visit (symbols [v.name]);
 			});
-			this.visitors.Add (ASTType.VAR, x => {
-				var v = x as AstVar;
+			this.visitors.Add (ASTType.VARIABLE, x => {
+				var v = x as AstVariable;
 				var value = v.value;
 				if (value == null) {
-					var type = visit (v.type) as AstType;
+					var type = visit (v.type) as AstTypename;
 					switch (type.name) {
 					case "int":
 						value = new AstNumber (0);
@@ -180,11 +181,11 @@ namespace compilers1
 
 		string read ()
 		{
-			int c = Console.Read ();
+			int c = io.Read ();
 			string s = "";
 			while (c >= 0 && !Char.IsWhiteSpace ((char)c)) {
 				s += (char)c;
-				c = Console.Read ();
+				c = io.Read ();
 			}
 			return s;
 		}
@@ -192,6 +193,10 @@ namespace compilers1
 		AST ast;
 		Dictionary<string /*ident*/, AST> symbols = new Dictionary<string, AST> ();
 		Dictionary<ASTType, visitor> visitors = new Dictionary<ASTType, visitor> ();
+
+		public bool errored { get; } = false;
+
+		IO io { get; }
 	}
 }
 

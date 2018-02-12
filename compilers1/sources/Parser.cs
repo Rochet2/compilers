@@ -10,14 +10,15 @@ namespace compilers1
 			this.lexeme = lexeme;
 		}
 
-		Lexeme lexeme;
+		public Lexeme lexeme { get; }
 	}
 
 	public class Parser
 	{
-		public Parser (Lexer lexer)
+		public Parser (Lexer lexer, IO io)
 		{
 			this.lexer = lexer;
+			this.io = io;
 		}
 
 		void next ()
@@ -25,30 +26,21 @@ namespace compilers1
 			curr_tok = lexer.next ();
 		}
 
-		void eat (string s)
-		{
-			if (curr_tok == null || curr_tok.s != s)
-				throw new ParEx ("could not find expected token", curr_tok);
-			next ();
-		}
-
-		void eat (Type t)
+		void eat (TokenType t)
 		{
 			if (curr_tok == null || curr_tok.t != t)
-				throw new ParEx ("could not find expected token", curr_tok);
+				throw new ParEx (String.Format ("expected token of type {0}, got {1}", t, curr_tok), curr_tok);
 			next ();
 		}
 
-		void eat (string s, Type t)
+		void eat (string s, TokenType t)
 		{
-			if (curr_tok == null || curr_tok.s != s)
-				throw new ParEx ("could not find expected token", curr_tok);
-			if (curr_tok == null || curr_tok.t != t)
-				throw new ParEx ("could not find expected token", curr_tok);
+			if (curr_tok == null || curr_tok.s != s || curr_tok.t != t)
+				throw new ParEx (String.Format ("expected token {{0}, \"{1}\"}, got {2}", t, s, curr_tok), curr_tok);
 			next ();
 		}
 
-		bool istype (Type t)
+		bool istype (TokenType t)
 		{
 			return curr_tok != null && curr_tok.t == t;
 		}
@@ -58,7 +50,7 @@ namespace compilers1
 			return curr_tok != null && curr_tok.s == s;
 		}
 
-		bool istype (string s, Type t)
+		bool istype (string s, TokenType t)
 		{
 			return istype (s) && istype (t);
 		}
@@ -66,36 +58,36 @@ namespace compilers1
 		AST NUM ()
 		{
 			var tok = curr_tok;
-			eat (Type.NUMBER);
+			eat (TokenType.NUMBER);
 			return new AstNumber (tok.s);
 		}
 
 		AST STR ()
 		{
 			var tok = curr_tok;
-			eat (Type.STRING);
+			eat (TokenType.STRING);
 			return new AstString (tok.s);
 		}
 
-		AstIdent IDENT ()
+		AstIdentifier IDENT ()
 		{
 			var tok = curr_tok;
-			eat (Type.IDENTIFIER);
-			return new AstIdent (tok.s);
+			eat (TokenType.IDENTIFIER);
+			return new AstIdentifier (tok.s);
 		}
 
 		AST TYPE ()
 		{
 			var tok = curr_tok;
-			eat (Type.KEYWORD);
-			return new AstType (tok.s);
+			eat (TokenType.KEYWORD);
+			return new AstTypename (tok.s);
 		}
 
 		AST UNARY ()
 		{
-			var v = new AstUnary ();
+			var v = new AstUnaryOperator ();
 			var tok = curr_tok;
-			eat (Type.OPERATOR);
+			eat (TokenType.OPERATOR);
 			v.op = tok.s;
 			v.v = OPND ();
 			return v;
@@ -103,9 +95,9 @@ namespace compilers1
 
 		AST BINOP ()
 		{
-			var v = new BinOp ();
+			var v = new BinaryOperator ();
 			var tok = curr_tok;
-			eat (Type.OPERATOR);
+			eat (TokenType.OPERATOR);
 			v.op = tok.s;
 			v.r = OPND ();
 			return v;
@@ -114,18 +106,18 @@ namespace compilers1
 		AST OPND ()
 		{
 			switch (curr_tok.t) {
-			case Type.SEPARATOR:
+			case TokenType.SEPARATOR:
 				{
-					eat ("(", Type.SEPARATOR);
+					eat ("(", TokenType.SEPARATOR);
 					var node = EXPR ();
-					eat (")", Type.SEPARATOR);
+					eat (")", TokenType.SEPARATOR);
 					return node;
 				}
-			case Type.NUMBER:
+			case TokenType.NUMBER:
 				return NUM ();
-			case Type.STRING:
+			case TokenType.STRING:
 				return STR ();
-			case Type.IDENTIFIER:
+			case TokenType.IDENTIFIER:
 				return IDENT ();
 			}
 			throw new ParEx ("OPND", curr_tok);
@@ -133,14 +125,14 @@ namespace compilers1
 
 		AST EXPRTAIL ()
 		{
-			if (istype (Type.OPERATOR))
+			if (istype (TokenType.OPERATOR))
 				return BINOP ();
 			return null;
 		}
 
 		AST EXPR ()
 		{
-			if (istype (Type.OPERATOR))
+			if (istype (TokenType.OPERATOR))
 				return UNARY ();
 			var v = new AstExpr ();
 			v.lopnd = OPND ();
@@ -150,24 +142,24 @@ namespace compilers1
 
 		AST PRINT ()
 		{
-			eat ("print", Type.KEYWORD);
+			eat ("print", TokenType.KEYWORD);
 			return new AstPrint (EXPR ());
 		}
 
 		AST ASSERT ()
 		{
 			var v = new AstAssert ();
-			eat ("assert", Type.KEYWORD);
-			eat ("(", Type.SEPARATOR);
+			eat ("assert", TokenType.KEYWORD);
+			eat ("(", TokenType.SEPARATOR);
 			v.cond = EXPR ();
-			eat (")", Type.SEPARATOR);
+			eat (")", TokenType.SEPARATOR);
 			return v;
 		}
 
 		AST VARTAIL ()
 		{
-			if (istype (":=", Type.SEPARATOR)) {
-				eat (":=", Type.SEPARATOR);
+			if (istype (":=", TokenType.SEPARATOR)) {
+				eat (":=", TokenType.SEPARATOR);
 				return EXPR ();
 			}
 			return null;
@@ -175,10 +167,10 @@ namespace compilers1
 
 		AST VAR ()
 		{
-			var v = new AstVar ();
-			eat ("var", Type.KEYWORD);
+			var v = new AstVariable ();
+			eat ("var", TokenType.KEYWORD);
 			v.ident = IDENT ().name;
-			eat (":", Type.SEPARATOR);
+			eat (":", TokenType.SEPARATOR);
 			v.type = TYPE ();
 			v.value = VARTAIL ();
 			return v;
@@ -188,36 +180,36 @@ namespace compilers1
 		{
 			var v = new AstAssign ();
 			v.ident = IDENT ().name;
-			eat (":=", Type.SEPARATOR);
+			eat (":=", TokenType.SEPARATOR);
 			v.value = EXPR ();
 			return v;
 		}
 
 		AST READ ()
 		{
-			eat ("read", Type.KEYWORD);
+			eat ("read", TokenType.KEYWORD);
 			return new AstRead (IDENT ().name);
 		}
 
 		AST FORLOOP ()
 		{
 			var v = new AstForLoop ();
-			eat ("for", Type.KEYWORD);
+			eat ("for", TokenType.KEYWORD);
 			v.ident = IDENT ().name;
-			eat ("in", Type.KEYWORD);
+			eat ("in", TokenType.KEYWORD);
 			v.begin = EXPR ();
-			eat ("..", Type.SEPARATOR);
+			eat ("..", TokenType.SEPARATOR);
 			v.end = EXPR ();
-			eat ("do", Type.KEYWORD);
+			eat ("do", TokenType.KEYWORD);
 			v.stmts = STMTS ();
-			eat ("end", Type.KEYWORD);
-			eat ("for", Type.KEYWORD);
+			eat ("end", TokenType.KEYWORD);
+			eat ("for", TokenType.KEYWORD);
 			return v;
 		}
 
 		AST STMT ()
 		{
-			if (istype (Type.KEYWORD)) {
+			if (istype (TokenType.KEYWORD)) {
 				switch (curr_tok.s) {
 				case "read":
 					return  READ ();
@@ -233,7 +225,7 @@ namespace compilers1
 					return null;
 				}
 			}
-			if (istype (Type.IDENTIFIER))
+			if (istype (TokenType.IDENTIFIER))
 				return ASSIGN ();
 			throw new ParEx ("STMT", curr_tok);
 		}
@@ -247,18 +239,18 @@ namespace compilers1
 
 		AST STMTS ()
 		{
-			var stmts = new AstStmts ();
+			var stmts = new AstStatements ();
 			stmts.stmt = STMT ();
 
 			if (stmts.stmt == null)
 				return null;
 
-			eat (";", Type.SEPARATOR);
+			eat (";", TokenType.SEPARATOR);
 			stmts.stmttail = STMTSTAIL ();
 			return stmts;
 		}
 
-		public AST Parse ()
+		AST PROG ()
 		{
 			next (); // get first token
 			AST ast = STMTS ();
@@ -267,8 +259,45 @@ namespace compilers1
 			return ast;
 		}
 
-		Lexer lexer;
+		void ERRORTAIL ()
+		{
+			try {
+				STMTSTAIL ();
+			} catch (ParEx e) {
+				errored = true;
+				io.WriteLine ("Parser error in {0} at {1}: {2}", lexer.input.name, e.lexeme.pos, e.Message);
+				skip_to_next_stmt ();
+				ERRORTAIL ();
+			}
+		}
+
+		public AST Parse ()
+		{
+			try {
+				return PROG ();
+			} catch (ParEx e) {
+				errored = true;
+				io.WriteLine ("Parser error in {0} at {1}: {2}", lexer.input.name, e.lexeme.pos, e.Message);
+				skip_to_next_stmt ();
+				ERRORTAIL ();
+			}
+			return null;
+		}
+
+		void skip_to_next_stmt ()
+		{
+			while (curr_tok != null && !istype (";", TokenType.SEPARATOR))
+				next ();
+			next ();
+		}
+
+		Lexer lexer { get; }
+
 		Lexeme curr_tok = null;
+
+		public bool errored { get; private set; } = false;
+
+		IO io { get; }
 	}
 }
 

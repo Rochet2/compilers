@@ -6,8 +6,24 @@ namespace compilers1
 {
 	public class Input
 	{
-		public Input (System.IO.Stream stream)
+		static MemoryStream ToStream (string s)
 		{
+			MemoryStream stream = new MemoryStream ();
+			StreamWriter writer = new StreamWriter (stream);
+			writer.Write (s);
+			writer.Flush ();
+			stream.Position = 0;
+			return stream;
+		}
+
+		public static Input ToInput (string s)
+		{
+			return new Input (ToStream (s));
+		}
+
+		public Input (System.IO.Stream stream, string name = null)
+		{
+			this.name = name ?? "<unknown>";
 			this.stream = stream;
 			for (int i = 0; i < buff.Length; ++i)
 				Next ();
@@ -70,12 +86,14 @@ namespace compilers1
 
 			public override string ToString ()
 			{
-				return string.Format ("{0,3}:{1,-3}", line, col);
+				return string.Format ("{0}:{1}", line, col);
 			}
 		}
 
 		Pos pos = new Pos ();
 		int[] buff = new int[2];
 		System.IO.Stream stream;
+
+		public string name { get; }
 	}
 }

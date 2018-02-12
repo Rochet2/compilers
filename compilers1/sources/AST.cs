@@ -5,21 +5,21 @@ namespace compilers1
 {
 	public enum ASTType
 	{
-		BINOP,
-		UOP,
 		NUMBER,
 		STRING,
 		BOOLEAN,
+		IDENTIFIER,
+		TYPENAME,
 		PRINT,
 		ASSERT,
-		IDENTIFIER,
-		TYPE,
-		STMTS,
 		READ,
-		VAR,
+		VARIABLE,
 		ASSIGN,
 		FORLOOP,
 		EXPR,
+		BINARYOP,
+		UNARYOP,
+		STATEMENTS,
 	}
 
 	public class AST
@@ -44,7 +44,7 @@ namespace compilers1
 	public class AstExpr : AST
 	{
 		public AstExpr () :
-		base (ASTType.EXPR)
+			base (ASTType.EXPR)
 		{
 		}
 
@@ -52,10 +52,10 @@ namespace compilers1
 		public AST rtail;
 	}
 
-	public class BinOp : AST
+	public class BinaryOperator : AST
 	{
-		public BinOp () :
-		base (ASTType.BINOP)
+		public BinaryOperator () :
+			base (ASTType.BINARYOP)
 		{
 		}
 
@@ -112,9 +112,9 @@ namespace compilers1
 		public bool v;
 	}
 
-	public class AstIdent : AST
+	public class AstIdentifier : AST
 	{
-		public AstIdent (string name) :
+		public AstIdentifier (string name) :
 			base (ASTType.IDENTIFIER)
 		{
 			this.name = name;
@@ -126,7 +126,7 @@ namespace compilers1
 	public class AstPrint : AST
 	{
 		public AstPrint (AST toprint) :
-		base (ASTType.PRINT)
+			base (ASTType.PRINT)
 		{
 			this.toprint = toprint;
 		}
@@ -137,7 +137,7 @@ namespace compilers1
 	public class AstRead : AST
 	{
 		public AstRead (string ident) :
-		base (ASTType.READ)
+			base (ASTType.READ)
 		{
 			this.ident = ident;
 		}
@@ -148,17 +148,17 @@ namespace compilers1
 	public class AstAssert : AST
 	{
 		public AstAssert () :
-		base (ASTType.ASSERT)
+			base (ASTType.ASSERT)
 		{
 		}
 
 		public AST cond;
 	}
 
-	public class AstUnary : AST
+	public class AstUnaryOperator : AST
 	{
-		public AstUnary () :
-			base (ASTType.UOP)
+		public AstUnaryOperator () :
+			base (ASTType.UNARYOP)
 		{
 		}
 
@@ -166,10 +166,10 @@ namespace compilers1
 		public AST v;
 	}
 
-	public class AstType : AST
+	public class AstTypename : AST
 	{
-		public AstType (string name) :
-		base (ASTType.TYPE)
+		public AstTypename (string name) :
+			base (ASTType.TYPENAME)
 		{
 			this.name = name;
 		}
@@ -177,10 +177,10 @@ namespace compilers1
 		public string name;
 	}
 
-	public class AstStmts : AST
+	public class AstStatements : AST
 	{
-		public AstStmts () :
-		base (ASTType.STMTS)
+		public AstStatements () :
+			base (ASTType.STATEMENTS)
 		{
 		}
 
@@ -188,10 +188,10 @@ namespace compilers1
 		public AST stmttail;
 	}
 
-	public class AstVar : AST
+	public class AstVariable : AST
 	{
-		public AstVar () :
-		base (ASTType.VAR)
+		public AstVariable () :
+			base (ASTType.VARIABLE)
 		{
 		}
 
@@ -203,7 +203,7 @@ namespace compilers1
 	public class AstAssign : AST
 	{
 		public AstAssign () :
-		base (ASTType.ASSIGN)
+			base (ASTType.ASSIGN)
 		{
 		}
 
@@ -214,7 +214,7 @@ namespace compilers1
 	public class AstForLoop : AST
 	{
 		public AstForLoop () :
-		base (ASTType.FORLOOP)
+			base (ASTType.FORLOOP)
 		{
 		}
 

@@ -38,11 +38,9 @@
     <Compile Include="sources\AST.cs" />
     <Compile Include="sources\Input.cs" />
     <Compile Include="sources\Interpreter.cs" />
-    <Compile Include="sources\Lexeme.cs" />
     <Compile Include="sources\Lexer.cs" />
     <Compile Include="sources\Parser.cs" />
-    <Compile Include="sources\TokenParser.cs" />
-    <Compile Include="sources\Type.cs" />
+    <Compile Include="sources\IO.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
