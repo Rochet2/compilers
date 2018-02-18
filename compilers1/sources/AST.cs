@@ -11,13 +11,13 @@ namespace compilers1
 		IDENTIFIER,
 		TYPENAME,
 		PRINT,
-		PRINTABLE,
+		VARIABLE,
 		ASSERT,
 		READ,
-		VARIABLE,
+		DEFINITION,
 		ASSIGN,
 		FORLOOP,
-		EXPR,
+		EXPRESSION,
 		BINARYOP,
 		UNARYOP,
 		STATEMENTS,
@@ -35,9 +35,9 @@ namespace compilers1
 		public Lexeme tok;
 	}
 
-	public abstract class Printable : AST
+	public abstract class AstVariable : AST
 	{
-		public Printable (ASTType t) : base (t)
+		public AstVariable (ASTType t) : base (t)
 		{
 		}
 
@@ -47,7 +47,7 @@ namespace compilers1
 	public class AstExpr : AST
 	{
 		public AstExpr () :
-			base (ASTType.EXPR)
+			base (ASTType.EXPRESSION)
 		{
 		}
 
@@ -66,7 +66,7 @@ namespace compilers1
 		public AST r;
 	}
 
-	public class AstNumber : Printable
+	public class AstNumber : AstVariable
 	{
 		public AstNumber (string v) :
 			base (ASTType.NUMBER)
@@ -80,6 +80,20 @@ namespace compilers1
 			this.v = v;
 		}
 
+		public AstNumber (string v, Lexeme tok) :
+			base (ASTType.NUMBER)
+		{
+			this.v = int.Parse (v);
+			this.tok = tok;
+		}
+
+		public AstNumber (int v, Lexeme tok) :
+			base (ASTType.NUMBER)
+		{
+			this.v = v;
+			this.tok = tok;
+		}
+
 		public override object Value ()
 		{
 			return v;
@@ -88,7 +102,7 @@ namespace compilers1
 		public int v;
 	}
 
-	public class AstString : Printable
+	public class AstString : AstVariable
 	{
 		public AstString (string v) :
 			base (ASTType.STRING)
@@ -104,7 +118,7 @@ namespace compilers1
 		public string v;
 	}
 
-	public class AstBool : Printable
+	public class AstBool : AstVariable
 	{
 		public AstBool (bool v) :
 			base (ASTType.BOOLEAN)
@@ -194,10 +208,10 @@ namespace compilers1
 		public AST stmttail;
 	}
 
-	public class AstVariable : AST
+	public class AstDefinition : AST
 	{
-		public AstVariable () :
-			base (ASTType.VARIABLE)
+		public AstDefinition () :
+			base (ASTType.DEFINITION)
 		{
 		}
 

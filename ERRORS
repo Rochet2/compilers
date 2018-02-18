@@ -29,7 +29,7 @@ statements dont return null
 print value not printable
 binary operator unknown for given operands
 unary operator unknown for given operand
-constant too high?
 
 Interpreter:
+Same as analyzer
 

@@ -24,8 +24,6 @@ namespace compilers1
 		void next ()
 		{
 			curr_tok = lexer.next ();
-			if (curr_tok != null && (curr_tok.t == TokenType.COMMENT || curr_tok.t == TokenType.BLOCKCOMMENT))
-				next ();
 		}
 
 		Lexeme eat (TokenType t)
@@ -178,7 +176,7 @@ namespace compilers1
 
 		AST VAR ()
 		{
-			var v = new AstVariable ();
+			var v = new AstDefinition ();
 			v.tok = eat ("var", TokenType.KEYWORD);
 			v.ident = IDENT ();
 			eat (":", TokenType.SEPARATOR);

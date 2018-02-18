@@ -5,62 +5,7 @@ namespace compilers1
 {
 	public class Analysis : Visitor
 	{
-		class SemEx : Exception
-		{
-			public SemEx (string message, AST node) : base (message)
-			{
-				this.node = node;
-			}
-
-			public readonly AST node;
-		}
-
-		T As<T> (AST v, ASTType expectedtype, AST errnode = null) where T : AST
-		{
-			var x = v as T;
-			if (x != null)
-				return x;
-			throw new SemEx (String.Format ("expected type {0}, got {1}", expectedtype, v.t), errnode ?? v);
-		}
-
-		void Expect<T> (AST v, ASTType expectedtype, AST errnode = null) where T : AST
-		{
-			var x = v as T;
-			if (x != null)
-				return;
-			throw new SemEx (String.Format ("expected type {0}, got {1}", expectedtype, v.t), errnode ?? v);
-		}
-
-		void ExpectNull (AST x, AST errnode = null)
-		{
-			if (x == null)
-				return;
-			throw new SemEx (String.Format ("return value expected to be null, got {0}", x.t), errnode ?? x);
-		}
-
-		AST ExpectNotNull (AST x, AST errnode = null)
-		{
-			if (x != null)
-				return x;
-			throw new SemEx ("return value expected not to be null", errnode ?? x);
-		}
-
-		bool Is<T> (AST v) where T : AST
-		{
-			var x = v as T;
-			if (x != null)
-				return true;
-			return false;
-		}
-
-		AST GetVar (AstIdentifier ident, AST errnode = null)
-		{
-			if (!symbols.ContainsKey (ident.name))
-				throw new SemEx (String.Format ("using undefined identifier {0}", ident.name), errnode ?? ident);
-			return symbols [ident.name];
-		}
-
-		public Analysis (AST ast, IO io) : base(ast, io)
+		public Analysis (AST ast, IO io) : base ("Semantic analysis", ast, io)
 		{
 			this.visitors.Add (ASTType.NUMBER, x => x);
 			this.visitors.Add (ASTType.STRING, x => x);
@@ -74,16 +19,16 @@ namespace compilers1
 					case "!":
 						return new AstBool (false);
 					}
-					throw new SemEx (String.Format ("unrecognized boolean unary operator {0}", op.op), op);
+					throw new VisitEx (String.Format ("unrecognized boolean unary operator {0}", op.op), op);
 				}
-				throw new SemEx (String.Format ("unrecognized unary operator {0} for operand type {1}", op.op, v.t), op);
+				throw new VisitEx (String.Format ("unrecognized unary operator {0} for operand type {1}", op.op, v.t), op);
 			});
-			this.visitors.Add (ASTType.EXPR, x => {
-				var exp = As<AstExpr> (x, ASTType.EXPR);
+			this.visitors.Add (ASTType.EXPRESSION, x => {
+				var exp = As<AstExpr> (x, ASTType.EXPRESSION);
 				if (exp.rtail == null)
 					return ExpectNotNull (visit (exp.lopnd), exp.lopnd);
 				var rtail = As<BinaryOperator> (exp.rtail, ASTType.BINARYOP);
-				var opl = ExpectNotNull (visit (exp.lopnd),exp.lopnd);
+				var opl = ExpectNotNull (visit (exp.lopnd), exp.lopnd);
 				var opr = ExpectNotNull (visit (rtail.r), rtail.r);
 				if (Is<AstNumber> (opl) && Is<AstNumber> (opr)) {
 					switch (rtail.op) {
@@ -96,7 +41,7 @@ namespace compilers1
 					case "<":
 						return new AstBool (false);
 					}
-					throw new SemEx (String.Format ("unknown integer binary operator {0}", rtail.op), rtail);
+					throw new VisitEx (String.Format ("unknown integer binary operator {0}", rtail.op), rtail);
 				}
 				if (Is<AstString> (opl) && Is<AstString> (opr)) {
 					switch (rtail.op) {
@@ -106,7 +51,7 @@ namespace compilers1
 					case "<":
 						return new AstBool (false);
 					}
-					throw new SemEx (String.Format ("unknown string binary operator {0}", rtail.op), rtail);
+					throw new VisitEx (String.Format ("unknown string binary operator {0}", rtail.op), rtail);
 				}
 				if (Is<AstBool> (opl) && Is<AstBool> (opr)) {
 					switch (rtail.op) {
@@ -115,27 +60,27 @@ namespace compilers1
 					case "<":
 						return new AstBool (false);
 					}
-					throw new SemEx (String.Format ("unknown boolean binary operator {0}", rtail.op), rtail);
+					throw new VisitEx (String.Format ("unknown boolean binary operator {0}", rtail.op), rtail);
 				}
-				throw new SemEx (String.Format ("unknown binary operator {0} for operand types left: {1}, right: {2}", rtail.op, visit (opl).t, visit (opr).t), rtail);
+				throw new VisitEx (String.Format ("unknown binary operator {0} for operand types left: {1}, right: {2}", rtail.op, visit (opl).t, visit (opr).t), rtail);
 			});
 			this.visitors.Add (ASTType.PRINT, x => {
 				var f = As<AstPrint> (x, ASTType.PRINT);
-				Expect<Printable> (visit (f.toprint), ASTType.PRINTABLE, f.toprint);
+				Expect<AstVariable> (visit (f.toprint), ASTType.VARIABLE, f.toprint);
 				return null;
 			});
 			this.visitors.Add (ASTType.STATEMENTS, x => {
 				var v = As<AstStatements> (x, ASTType.STATEMENTS);
 				try {
 					ExpectNull (visit (v.stmt), v.stmt);
-				} catch (SemEx e) {
-					error (e);
+				} catch (VisitEx e) {
+					PrintError (e);
 				}
 				if (v.stmttail != null) {
 					try {
 						ExpectNull (visit (v.stmttail), v.stmttail);
-					} catch (SemEx e) {
-						error (e);
+					} catch (VisitEx e) {
+						PrintError (e);
 					}
 				}
 				return null;
@@ -148,26 +93,26 @@ namespace compilers1
 			this.visitors.Add (ASTType.READ, x => {
 				var f = As<AstRead> (x, ASTType.READ);
 				var ident = As<AstIdentifier> (f.ident, ASTType.IDENTIFIER);
-				var var = GetVar (ident);
-				var type = var.t;
+				var variable = ExpectMutable (ident, f.ident);
+				var type = variable.value.t;
 				switch (type) {
 				case ASTType.NUMBER:
-					symbols [ident.name] = new AstNumber (0);
+					variables [ident.name] = new Variable (new AstNumber (0));
 					break;
 				case ASTType.STRING:
-					symbols [ident.name] = new AstString ("");
+					variables [ident.name] = new Variable (new AstString (""));
 					break;
 				default:
-					throw new SemEx (String.Format ("variable {0} has unsupported type {1} to read from input", ident.name, type), f.ident);
+					throw new VisitEx (String.Format ("variable {0} has unsupported type {1} to read from input", ident.name, type), f.ident);
 				}
 				return null;
 			});
 			this.visitors.Add (ASTType.IDENTIFIER, x => {
 				var v = As<AstIdentifier> (x, ASTType.IDENTIFIER);
-				return GetVar (v);
+				return GetVar (v).value;
 			});
-			this.visitors.Add (ASTType.VARIABLE, x => {
-				var v = As<AstVariable> (x, ASTType.VARIABLE);
+			this.visitors.Add (ASTType.DEFINITION, x => {
+				var v = As<AstDefinition> (x, ASTType.DEFINITION);
 				var type = As<AstTypename> (v.type, ASTType.TYPENAME);
 				var ident = As<AstIdentifier> (v.ident, ASTType.IDENTIFIER);
 				ASTType typeasttype;
@@ -182,67 +127,52 @@ namespace compilers1
 					typeasttype = ASTType.BOOLEAN;
 					break;
 				default:
-					throw new SemEx (String.Format ("unknown identifier type name {0}", type.name), v.type);
+					throw new VisitEx (String.Format ("unknown identifier type name {0}", type.name), v.type);
 				}
-				if (symbols.ContainsKey (ident.name))
-					throw new SemEx (String.Format ("variable {0} already defined", ident.name), v.ident);
+				if (variables.ContainsKey (ident.name))
+					throw new VisitEx (String.Format ("variable {0} already defined", ident.name), v.ident);
 				if (v.value == null) {
 					switch (type.name) {
 					case "int":
-						symbols [ident.name] = new AstNumber (0);
+						variables [ident.name] = new Variable (new AstNumber (0));
 						break;
 					case "string":
-						symbols [ident.name] = new AstString ("");
+						variables [ident.name] = new Variable (new AstString (""));
 						break;
 					case "bool":
-						symbols [ident.name] = new AstBool (false);
+						variables [ident.name] = new Variable (new AstBool (false));
 						break;
 					}
 				} else {
 					var value = visit (v.value);
 					if (value == null || value.t != typeasttype)
-						throw new SemEx (String.Format ("variable {0} type {1} does not match value type {2}", ident.name, typeasttype, value == null ? "null" : value.t.ToString ()), ident);
-					symbols [ident.name] = visit (value);
+						throw new VisitEx (String.Format ("variable {0} type {1} does not match value type {2}", ident.name, typeasttype, value == null ? "null" : value.t.ToString ()), ident);
+					variables [ident.name] = new Variable (As<AstVariable>(value, ASTType.VARIABLE));
 				}
 				return null;
 			});
 			this.visitors.Add (ASTType.FORLOOP, x => {
 				var v = As<AstForLoop> (x, ASTType.FORLOOP);
 				var ident = As<AstIdentifier> (v.ident, ASTType.IDENTIFIER);
-				Expect<AstNumber> (GetVar (ident), ASTType.NUMBER, v.ident);
+				var control = ExpectMutable (ident, v.ident);
+				Expect<AstNumber> (control.value, ASTType.NUMBER, v.ident);
 				Expect<AstNumber> (visit (v.begin), ASTType.NUMBER, v.begin);
 				Expect<AstNumber> (visit (v.end), ASTType.NUMBER, v.end);
+				control.immutable = true;
 				ExpectNull (visit (v.stmts), v.stmts);
+				control.immutable = false;
 				return null;
 			});
 			this.visitors.Add (ASTType.ASSIGN, x => {
 				var v = As<AstAssign> (x, ASTType.ASSIGN);
 				var ident = As<AstIdentifier> (v.ident, ASTType.IDENTIFIER);
-				AST o = GetVar (ident);
+				var variable = ExpectMutable (ident, v.ident);
 				var value = visit (v.value);
-				if (value == null || value.t != o.t)
-					throw new SemEx (String.Format ("variable {0} type {1} does not match value type {2}", ident.name, o.t, value == null ? "null" : value.t.ToString ()), x);
-				symbols [ident.name] = value;
+				if (value == null || value.t != variable.value.t)
+					throw new VisitEx (String.Format ("variable {0} type {1} does not match value type {2}", ident.name, variable.value.t, value == null ? "null" : value.t.ToString ()), x);
+				variables [ident.name] = new Variable (As<AstVariable>(value, ASTType.VARIABLE));
 				return null;
 			});
-		}
-
-		public override void visit ()
-		{
-			try {
-				ExpectNull (visit (ast));
-			} catch (SemEx e) {
-				error (e);
-			}
-		}
-
-		void error (SemEx e)
-		{
-			errored = true;
-			if (e.node == null || e.node.tok == null)
-				io.WriteLine ("Semantic error at ?: {0}", e.Message);
-			else
-				io.WriteLine ("Semantic error at {0}: {1}", e.node.tok.pos, e.Message);
 		}
 	}
 }

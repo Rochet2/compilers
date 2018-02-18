@@ -137,7 +137,7 @@ namespace compilers1
 			return new Lexeme (TokenType.COMMENT, pos, s);
 		}
 
-		// "(\\.|([^"]))*"
+		// "(\\[^\n]|[^"\n])*"
 		public Lexeme expectstring ()
 		{
 			Input.Pos pos = input.GetPos ();
@@ -214,8 +214,8 @@ namespace compilers1
 			Input.Pos pos = input.GetPos ();
 			if (!input.Has ())
 				throw new LexEx ("identifier or keyword expected", pos);
-			if (!(Char.IsLetter (input.Peek ()) || input.Peek () == '_'))
-				throw new LexEx ("identifier or keyword must start with a letter or underscore", pos);
+			if (!(Char.IsLetter (input.Peek ())))
+				throw new LexEx ("identifier or keyword must start with a letter", pos);
 			string s = "";
 			do {
 				char c = input.Peek ();
@@ -235,10 +235,12 @@ namespace compilers1
 
 			try {
 				if (current == '/' && next == '/') {
-					lexed.Add (expectcomment ());
+					expectcomment ();
+					return lexnext ();
 				} else if (current == '/' && next == '*') {
-					lexed.Add (expectblockcomment ());
-				} else if (Char.IsLetter (current) || current == '_') {
+					expectblockcomment ();
+					return lexnext ();
+				} else if (Char.IsLetter (current)) {
 					lexed.Add (expectidentifierorkeyword ());
 				} else if (
 					current == ':' && next == '=') {
