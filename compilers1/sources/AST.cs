@@ -11,6 +11,7 @@ namespace compilers1
 		IDENTIFIER,
 		TYPENAME,
 		PRINT,
+		PRINTABLE,
 		ASSERT,
 		READ,
 		VARIABLE,
@@ -24,12 +25,14 @@ namespace compilers1
 
 	public class AST
 	{
-		public AST (ASTType t)
+		public AST (ASTType t, Lexeme tok = null)
 		{
 			this.t = t;
+			this.tok = tok;
 		}
 
 		public readonly ASTType t;
+		public Lexeme tok;
 	}
 
 	public abstract class Printable : AST
@@ -101,12 +104,17 @@ namespace compilers1
 		public string v;
 	}
 
-	public class AstBool : AST
+	public class AstBool : Printable
 	{
 		public AstBool (bool v) :
 			base (ASTType.BOOLEAN)
 		{
 			this.v = v;
+		}
+
+		public override object Value ()
+		{
+			return v;
 		}
 
 		public bool v;
@@ -125,10 +133,9 @@ namespace compilers1
 
 	public class AstPrint : AST
 	{
-		public AstPrint (AST toprint) :
+		public AstPrint () :
 			base (ASTType.PRINT)
 		{
-			this.toprint = toprint;
 		}
 
 		public AST toprint;
@@ -136,13 +143,12 @@ namespace compilers1
 
 	public class AstRead : AST
 	{
-		public AstRead (string ident) :
+		public AstRead () :
 			base (ASTType.READ)
 		{
-			this.ident = ident;
 		}
 
-		public string ident;
+		public AST ident;
 	}
 
 	public class AstAssert : AST
@@ -195,7 +201,7 @@ namespace compilers1
 		{
 		}
 
-		public string ident;
+		public AST ident;
 		public AST type;
 		public AST value = null;
 	}
@@ -207,7 +213,7 @@ namespace compilers1
 		{
 		}
 
-		public string ident;
+		public AST ident;
 		public AST value;
 	}
 
@@ -218,7 +224,7 @@ namespace compilers1
 		{
 		}
 
-		public string ident;
+		public AST ident;
 		public AST begin, end, stmts;
 	}
 }

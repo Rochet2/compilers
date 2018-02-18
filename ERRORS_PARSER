@@ -1,0 +1,15 @@
+// Parser errors:
+assert 0 token type does not match expected 0;
+assert ) token value does not match expected (;
+; // empty statement
+var X : int := 4 + (6 * 2; // missing tokens
+var X : int := 4 + (6 *; // missing tokens
+var X : int := 4 + (6; // missing tokens
+var X : int := 4 + (; // missing tokens
+var X : int := 4 +; // missing tokens
+var X : int :=; // missing tokens
+var X :; // missing tokens
+var X; // missing tokens
+var; // missing tokens
+123 // tokens after program end
+

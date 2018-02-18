@@ -3,21 +3,25 @@ using System.Collections.Generic;
 
 namespace compilers1
 {
-	class IntEx : Exception
+	public class Interpreter : Visitor
 	{
-		public IntEx (string message) : base (message)
+		class IntEx : Exception
 		{
+			public IntEx (string message) : base (message)
+			{
+			}
 		}
-	}
 
-	delegate AST visitor (AST ast);
-
-	public class Interpreter
-	{
-		public Interpreter (AST ast, IO io)
+		T As<T> (AST v) where T : AST
 		{
-			this.io = io;
-			this.ast = ast;
+			var x = v as T;
+			if (x != null)
+				return x;
+			throw new IntEx (String.Format ("expected type {0}, got {1}", typeof(T).Name, v.t));
+		}
+
+		public Interpreter (AST ast, IO io) : base(ast, io)
+		{
 			this.visitors.Add (ASTType.NUMBER, x => x);
 			this.visitors.Add (ASTType.STRING, x => x);
 			this.visitors.Add (ASTType.BOOLEAN, x => x);
@@ -104,11 +108,12 @@ namespace compilers1
 			});
 			this.visitors.Add (ASTType.READ, x => {
 				var f = x as AstRead;
-				switch (symbols [f.ident].t) {
+				var ident = As<AstIdentifier>(f.ident);
+				switch (symbols [ident.name].t) {
 				case ASTType.NUMBER:
 					while (true) {
 						try {
-							symbols [f.ident] = new AstNumber (read ());
+							symbols [ident.name] = new AstNumber (read ());
 							break;
 						} catch (System.FormatException /*e*/) {
 							// Occurs when user inputs non number
@@ -117,7 +122,7 @@ namespace compilers1
 					}
 					break;
 				case ASTType.STRING:
-					symbols [f.ident] = new AstString (read ());
+					symbols [ident.name] = new AstString (read ());
 					break;
 				}
 				return null;
@@ -145,36 +150,32 @@ namespace compilers1
 						throw new IntEx ("unknown identifier type");
 					}
 				}
-				symbols [v.ident] = visit (value);
+				var ident = As<AstIdentifier>(v.ident);
+				symbols [ident.name] = visit (value);
 				return null;
 			});
 			this.visitors.Add (ASTType.FORLOOP, x => {
 				var v = x as AstForLoop;
+				var ident = As<AstIdentifier>(v.ident);
 				var begin = visit (v.begin) as AstNumber;
 				var end = visit (v.end) as AstNumber;
 				int i = begin.v;
 				for (; i <= end.v; ++i) {
-					symbols [v.ident] = new AstNumber (i);
+					symbols [ident.name] = new AstNumber (i);
 					visit (v.stmts);
 				}
-				symbols [v.ident] = new AstNumber (i);
+				symbols [ident.name] = new AstNumber (i);
 				return null;
 			});
 			this.visitors.Add (ASTType.ASSIGN, x => {
 				var v = x as AstAssign;
-				symbols [v.ident] = visit (v.value);
+				var ident = As<AstIdentifier>(v.ident);
+				symbols [ident.name] = visit (v.value);
 				return null;
 			});
 		}
 
-		public AST visit (AST v)
-		{
-			if (!visitors.ContainsKey (v.t))
-				throw new IntEx ("unknown AST type");
-			return visitors [v.t] (v);
-		}
-
-		public void visit ()
+		public override void visit ()
 		{
 			visit (ast);
 		}
@@ -189,14 +190,6 @@ namespace compilers1
 			}
 			return s;
 		}
-
-		AST ast;
-		Dictionary<string /*ident*/, AST> symbols = new Dictionary<string, AST> ();
-		Dictionary<ASTType, visitor> visitors = new Dictionary<ASTType, visitor> ();
-
-		public bool errored { get; } = false;
-
-		IO io { get; }
 	}
 }
 

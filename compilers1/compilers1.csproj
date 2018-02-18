@@ -41,6 +41,8 @@
     <Compile Include="sources\Lexer.cs" />
     <Compile Include="sources\Parser.cs" />
     <Compile Include="sources\IO.cs" />
+    <Compile Include="sources\Analysis.cs" />
+    <Compile Include="sources\Visitor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -1,0 +1,19 @@
+// Analyzer errors:
+x := 5; // x not defined
+var x : int; x := "string"; // wrong type
+for x in (1=1)..2 do print x; end for; // begin not number
+for x in 1..("str") do print x; end for; // end not number
+for y in 1..2 do print y; end for; // loop variable not defined
+var y : string; for y in 1..2 do print y; end for; // loop variable not a number
+var z : bool; var z : bool; // duplicate define
+var a : print; // unknown variable type
+var b : bool := "str"; // variable type and value mismatch
+print c; // c not defined
+read d; // d not defined
+var e : bool; read e; // e not readable type
+assert (5); // assert condition not boolean
+print 1&2; // invalid integer operator
+print 1&"a"; // invalid binary operator
+print 1="a"; // invalid binary operator
+print &(1=1); // invalid unary operator
+

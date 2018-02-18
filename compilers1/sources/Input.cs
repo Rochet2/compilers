@@ -21,9 +21,8 @@ namespace compilers1
 			return new Input (ToStream (s));
 		}
 
-		public Input (System.IO.Stream stream, string name = null)
+		public Input (Stream stream)
 		{
-			this.name = name ?? "<unknown>";
 			this.stream = stream;
 			for (int i = 0; i < buff.Length; ++i)
 				Next ();
@@ -92,8 +91,6 @@ namespace compilers1
 
 		Pos pos = new Pos ();
 		int[] buff = new int[2];
-		System.IO.Stream stream;
-
-		public string name { get; }
+		Stream stream;
 	}
 }

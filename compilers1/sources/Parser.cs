@@ -3,18 +3,18 @@ using System.Collections.Generic;
 
 namespace compilers1
 {
-	class ParEx : Exception
-	{
-		public ParEx (string message, Lexeme lexeme) : base (message)
-		{
-			this.lexeme = lexeme;
-		}
-
-		public Lexeme lexeme { get; }
-	}
-
 	public class Parser
 	{
+		class ParEx : Exception
+		{
+			public ParEx (string message, Lexeme lexeme) : base (message)
+			{
+				this.lexeme = lexeme;
+			}
+
+			public Lexeme lexeme { get; }
+		}
+
 		public Parser (Lexer lexer, IO io)
 		{
 			this.lexer = lexer;
@@ -24,20 +24,30 @@ namespace compilers1
 		void next ()
 		{
 			curr_tok = lexer.next ();
+			if (curr_tok != null && (curr_tok.t == TokenType.COMMENT || curr_tok.t == TokenType.BLOCKCOMMENT))
+				next ();
 		}
 
-		void eat (TokenType t)
+		Lexeme eat (TokenType t)
 		{
-			if (curr_tok == null || curr_tok.t != t)
-				throw new ParEx (String.Format ("expected token of type {0}, got {1}", t, curr_tok), curr_tok);
+			var v = curr_tok;
+			if (v == null)
+				throw new ParEx (String.Format ("expected token of type {0}", t), null);
+			if (v.t != t)
+				throw new ParEx (String.Format ("expected token of type {0}, got {1}", t, v == null ? "null" : v.ToString ()), v);
 			next ();
+			return v;
 		}
 
-		void eat (string s, TokenType t)
+		Lexeme eat (string s, TokenType t)
 		{
-			if (curr_tok == null || curr_tok.s != s || curr_tok.t != t)
-				throw new ParEx (String.Format ("expected token {{0}, \"{1}\"}, got {2}", t, s, curr_tok), curr_tok);
+			var v = curr_tok;
+			if (v == null)
+				throw new ParEx (String.Format ("expected token {{{0}, \"{1}\"}}", t, s), null);
+			if (v.s != s || v.t != t)
+				throw new ParEx (String.Format ("expected token {{{0}, \"{1}\"}}, got {2}", t, s, v == null ? "null" : v.ToString ()), v);
 			next ();
+			return v;
 		}
 
 		bool istype (TokenType t)
@@ -57,38 +67,37 @@ namespace compilers1
 
 		AST NUM ()
 		{
-			var tok = curr_tok;
-			eat (TokenType.NUMBER);
-			return new AstNumber (tok.s);
+			var v = new AstNumber (curr_tok.s);
+			v.tok = eat (TokenType.NUMBER);
+			return v;
 		}
 
 		AST STR ()
 		{
-			var tok = curr_tok;
-			eat (TokenType.STRING);
-			return new AstString (tok.s);
+			var v = new AstString (curr_tok.s);
+			v.tok = eat (TokenType.STRING);
+			return v;
 		}
 
 		AstIdentifier IDENT ()
 		{
-			var tok = curr_tok;
-			eat (TokenType.IDENTIFIER);
-			return new AstIdentifier (tok.s);
+			var v = new AstIdentifier (curr_tok.s);
+			v.tok = eat (TokenType.IDENTIFIER);
+			return v;
 		}
 
 		AST TYPE ()
 		{
-			var tok = curr_tok;
-			eat (TokenType.KEYWORD);
-			return new AstTypename (tok.s);
+			var v = new AstTypename (curr_tok.s);
+			v.tok = eat (TokenType.KEYWORD);
+			return v;
 		}
 
 		AST UNARY ()
 		{
 			var v = new AstUnaryOperator ();
-			var tok = curr_tok;
-			eat (TokenType.OPERATOR);
-			v.op = tok.s;
+			v.tok = eat (TokenType.OPERATOR);
+			v.op = v.tok.s;
 			v.v = OPND ();
 			return v;
 		}
@@ -96,9 +105,8 @@ namespace compilers1
 		AST BINOP ()
 		{
 			var v = new BinaryOperator ();
-			var tok = curr_tok;
-			eat (TokenType.OPERATOR);
-			v.op = tok.s;
+			v.tok = eat (TokenType.OPERATOR);
+			v.op = v.tok.s;
 			v.r = OPND ();
 			return v;
 		}
@@ -120,7 +128,7 @@ namespace compilers1
 			case TokenType.IDENTIFIER:
 				return IDENT ();
 			}
-			throw new ParEx ("OPND", curr_tok);
+			throw new ParEx ("operand expected", curr_tok);
 		}
 
 		AST EXPRTAIL ()
@@ -135,6 +143,7 @@ namespace compilers1
 			if (istype (TokenType.OPERATOR))
 				return UNARY ();
 			var v = new AstExpr ();
+			v.tok = curr_tok;
 			v.lopnd = OPND ();
 			v.rtail = EXPRTAIL ();
 			return v;
@@ -142,14 +151,16 @@ namespace compilers1
 
 		AST PRINT ()
 		{
-			eat ("print", TokenType.KEYWORD);
-			return new AstPrint (EXPR ());
+			var v = new AstPrint ();
+			v.tok = eat ("print", TokenType.KEYWORD);
+			v.toprint = EXPR ();
+			return v;
 		}
 
 		AST ASSERT ()
 		{
 			var v = new AstAssert ();
-			eat ("assert", TokenType.KEYWORD);
+			v.tok = eat ("assert", TokenType.KEYWORD);
 			eat ("(", TokenType.SEPARATOR);
 			v.cond = EXPR ();
 			eat (")", TokenType.SEPARATOR);
@@ -168,8 +179,8 @@ namespace compilers1
 		AST VAR ()
 		{
 			var v = new AstVariable ();
-			eat ("var", TokenType.KEYWORD);
-			v.ident = IDENT ().name;
+			v.tok = eat ("var", TokenType.KEYWORD);
+			v.ident = IDENT ();
 			eat (":", TokenType.SEPARATOR);
 			v.type = TYPE ();
 			v.value = VARTAIL ();
@@ -179,29 +190,31 @@ namespace compilers1
 		AST ASSIGN ()
 		{
 			var v = new AstAssign ();
-			v.ident = IDENT ().name;
-			eat (":=", TokenType.SEPARATOR);
+			v.ident = IDENT ();
+			v.tok = eat (":=", TokenType.SEPARATOR);
 			v.value = EXPR ();
 			return v;
 		}
 
 		AST READ ()
 		{
-			eat ("read", TokenType.KEYWORD);
-			return new AstRead (IDENT ().name);
+			var v = new AstRead ();
+			v.tok = eat ("read", TokenType.KEYWORD);
+			v.ident = IDENT ();
+			return v;
 		}
 
 		AST FORLOOP ()
 		{
 			var v = new AstForLoop ();
-			eat ("for", TokenType.KEYWORD);
-			v.ident = IDENT ().name;
+			v.tok = eat ("for", TokenType.KEYWORD);
+			v.ident = IDENT ();
 			eat ("in", TokenType.KEYWORD);
 			v.begin = EXPR ();
 			eat ("..", TokenType.SEPARATOR);
 			v.end = EXPR ();
 			eat ("do", TokenType.KEYWORD);
-			v.stmts = STMTS ();
+			v.stmts = STMTS_FORLOOP ();
 			eat ("end", TokenType.KEYWORD);
 			eat ("for", TokenType.KEYWORD);
 			return v;
@@ -227,27 +240,55 @@ namespace compilers1
 			}
 			if (istype (TokenType.IDENTIFIER))
 				return ASSIGN ();
-			throw new ParEx ("STMT", curr_tok);
+			throw new ParEx (String.Format ("statement expected"), curr_tok);
+		}
+
+		AST STMTSTAIL_FORLOOP ()
+		{
+			var v = new AstStatements ();
+			if (curr_tok == null)
+				return null; // no more statements
+			v.stmt = STMT ();
+			if (v.stmt == null)
+				return null; // end for
+			eat (";", TokenType.SEPARATOR);
+			v.stmttail = STMTSTAIL_FORLOOP ();
+			return v;
+		}
+
+		AST STMTS_FORLOOP ()
+		{
+			var v = new AstStatements ();
+			v.stmt = STMT ();
+			if (v.stmt == null)
+				throw new ParEx (String.Format ("statement expected"), curr_tok);
+			eat (";", TokenType.SEPARATOR);
+			v.stmttail = STMTSTAIL_FORLOOP ();
+			return v;
 		}
 
 		AST STMTSTAIL ()
 		{
+			var v = new AstStatements ();
 			if (curr_tok == null)
-				return null;
-			return STMTS ();
+				return null; // no more statements
+			v.stmt = STMT ();
+			if (v.stmt == null)
+				throw new ParEx (String.Format ("statement expected"), curr_tok);
+			eat (";", TokenType.SEPARATOR);
+			v.stmttail = STMTSTAIL ();
+			return v;
 		}
 
 		AST STMTS ()
 		{
-			var stmts = new AstStatements ();
-			stmts.stmt = STMT ();
-
-			if (stmts.stmt == null)
-				return null;
-
+			var v = new AstStatements ();
+			v.stmt = STMT ();
+			if (v.stmt == null)
+				throw new ParEx (String.Format ("statement expected"), curr_tok);
 			eat (";", TokenType.SEPARATOR);
-			stmts.stmttail = STMTSTAIL ();
-			return stmts;
+			v.stmttail = STMTSTAIL ();
+			return v;
 		}
 
 		AST PROG ()
@@ -265,8 +306,7 @@ namespace compilers1
 				STMTSTAIL ();
 			} catch (ParEx e) {
 				errored = true;
-				io.WriteLine ("Parser error in {0} at {1}: {2}", lexer.input.name, e.lexeme.pos, e.Message);
-				skip_to_next_stmt ();
+				error (e);
 				ERRORTAIL ();
 			}
 		}
@@ -277,11 +317,20 @@ namespace compilers1
 				return PROG ();
 			} catch (ParEx e) {
 				errored = true;
-				io.WriteLine ("Parser error in {0} at {1}: {2}", lexer.input.name, e.lexeme.pos, e.Message);
-				skip_to_next_stmt ();
+				error (e);
 				ERRORTAIL ();
 			}
 			return null;
+		}
+
+		void error (ParEx e)
+		{
+			errored = true;
+			if (e.lexeme == null)
+				io.WriteLine ("Parser error at <end of file>: {0}", e.Message);
+			else
+				io.WriteLine ("Parser error at {0}: {1}", e.lexeme.pos, e.Message);
+			skip_to_next_stmt ();
 		}
 
 		void skip_to_next_stmt ()

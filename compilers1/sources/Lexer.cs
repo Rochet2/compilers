@@ -44,23 +44,23 @@ namespace compilers1
 		}
 	}
 
-	class LexEx : Exception
-	{
-		public LexEx (string message, Input.Pos position) : base (message)
-		{
-			this.position = position;
-		}
-
-		public Input.Pos position { get; }
-
-		public override string ToString ()
-		{
-			return this.Message;
-		}
-	}
-
 	public class Lexer
 	{
+		class LexEx : Exception
+		{
+			public LexEx (string message, Input.Pos position) : base (message)
+			{
+				this.position = position;
+			}
+
+			public Input.Pos position { get; }
+
+			public override string ToString ()
+			{
+				return this.Message;
+			}
+		}
+
 		public Lexer (Input input, IO io)
 		{
 			this.input = input;
@@ -111,6 +111,9 @@ namespace compilers1
 					s += input.Peek ();
 				} while (input.Next ());
 				if (s.Length > 0) {
+					int parsed = 0;
+					if (!int.TryParse (s, out parsed))
+						throw new LexEx ("too high constant value", pos);
 					return new Lexeme (TokenType.NUMBER, pos, s);
 				}
 			}
@@ -212,7 +215,7 @@ namespace compilers1
 			if (!input.Has ())
 				throw new LexEx ("identifier or keyword expected", pos);
 			if (!(Char.IsLetter (input.Peek ()) || input.Peek () == '_'))
-				throw new LexEx ("identifier must start with a letter or underscore", pos);
+				throw new LexEx ("identifier or keyword must start with a letter or underscore", pos);
 			string s = "";
 			do {
 				char c = input.Peek ();
@@ -235,7 +238,7 @@ namespace compilers1
 					lexed.Add (expectcomment ());
 				} else if (current == '/' && next == '*') {
 					lexed.Add (expectblockcomment ());
-				} else if (Char.IsLetter (current)) {
+				} else if (Char.IsLetter (current) || current == '_') {
 					lexed.Add (expectidentifierorkeyword ());
 				} else if (
 					current == ':' && next == '=') {
@@ -275,11 +278,11 @@ namespace compilers1
 				} else {
 					Input.Pos pos = input.GetPos ();
 					input.Next ();
-					throw new LexEx (String.Format ("unrecognized beginning for a token {0}{1}", current, next), pos);
+					throw new LexEx (String.Format ("unrecognized token {0}{1}", current, next), pos);
 				}
 			} catch (LexEx e) {
 				errored = true;
-				io.WriteLine ("Lexical error in {0} at {1}: {2}", input.name, e.position, e.ToString ());
+				io.WriteLine ("Lexical error at {0}: {1}", e.position, e.ToString ());
 				skip_to_next_line ();
 				return lexnext ();
 			}

@@ -24,6 +24,10 @@ namespace compilers1
 			AST ast = parser.Parse ();
 			if (lexer.errored || parser.errored)
 				return;
+			Analysis semanticanalysis = new Analysis (ast, io);
+			semanticanalysis.visit();
+			if (semanticanalysis.errored)
+				return;
 			Interpreter inter = new Interpreter (ast, io);
 			inter.visit ();
 			if (inter.errored) {
