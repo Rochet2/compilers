@@ -212,7 +212,9 @@ namespace compilers1
 			eat ("..", TokenType.SEPARATOR);
 			v.end = EXPR ();
 			eat ("do", TokenType.KEYWORD);
-			v.stmts = STMTS_FORLOOP ();
+			v.stmts = STMTS ();
+			if (v.stmts == null) // no statements found inside for loop
+				throw new ParEx (String.Format ("statement expected in for loop"), curr_tok);
 			eat ("end", TokenType.KEYWORD);
 			eat ("for", TokenType.KEYWORD);
 			return v;
@@ -232,47 +234,19 @@ namespace compilers1
 					return VAR ();
 				case "for":
 					return FORLOOP ();
-				case "end":
-					return null;
 				}
 			}
 			if (istype (TokenType.IDENTIFIER))
 				return ASSIGN ();
-			throw new ParEx (String.Format ("statement expected"), curr_tok);
-		}
-
-		AST STMTSTAIL_FORLOOP ()
-		{
-			var v = new AstStatements ();
-			if (curr_tok == null)
-				return null; // no more statements
-			v.stmt = STMT ();
-			if (v.stmt == null)
-				return null; // end for
-			eat (";", TokenType.SEPARATOR);
-			v.stmttail = STMTSTAIL_FORLOOP ();
-			return v;
-		}
-
-		AST STMTS_FORLOOP ()
-		{
-			var v = new AstStatements ();
-			v.stmt = STMT ();
-			if (v.stmt == null)
-				throw new ParEx (String.Format ("statement expected"), curr_tok);
-			eat (";", TokenType.SEPARATOR);
-			v.stmttail = STMTSTAIL_FORLOOP ();
-			return v;
+			return null; // was not a statement
 		}
 
 		AST STMTSTAIL ()
 		{
 			var v = new AstStatements ();
-			if (curr_tok == null)
-				return null; // no more statements
 			v.stmt = STMT ();
 			if (v.stmt == null)
-				throw new ParEx (String.Format ("statement expected"), curr_tok);
+				return null; // no more statements
 			eat (";", TokenType.SEPARATOR);
 			v.stmttail = STMTSTAIL ();
 			return v;
@@ -283,7 +257,7 @@ namespace compilers1
 			var v = new AstStatements ();
 			v.stmt = STMT ();
 			if (v.stmt == null)
-				throw new ParEx (String.Format ("statement expected"), curr_tok);
+				return null; // not even a single statement
 			eat (";", TokenType.SEPARATOR);
 			v.stmttail = STMTSTAIL ();
 			return v;
@@ -293,8 +267,10 @@ namespace compilers1
 		{
 			next (); // get first token
 			AST ast = STMTS ();
-			if (curr_tok != null)
-				throw new ParEx ("unexpected token after program end", curr_tok);
+			if (ast == null) // found no statements
+				throw new ParEx (String.Format ("statement expected"), curr_tok);
+			if (curr_tok != null) // tokens exist after statements
+				throw new ParEx ("unexpected token after program statements", curr_tok);
 			return ast;
 		}
 
@@ -325,9 +301,9 @@ namespace compilers1
 		{
 			errored = true;
 			if (e.lexeme == null)
-				io.WriteLine ("Parser error at <end of file>: {0}", e.Message);
+				io.WriteLine ("Parser error at <end of file>: {0}, current token: {1}", e.Message, e.lexeme.ToString());
 			else
-				io.WriteLine ("Parser error at {0}: {1}", e.lexeme.pos, e.Message);
+				io.WriteLine ("Parser error at {0}: {1}, current token: {2}", e.lexeme.pos, e.Message, e.lexeme.ToString());
 			skip_to_next_stmt ();
 		}
 
