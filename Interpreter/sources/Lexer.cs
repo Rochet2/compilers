@@ -207,6 +207,7 @@ namespace Interpreter
                         {
                             case 'n': s += '\n'; break;
                             case 't': s += '\t'; break;
+                            case '"': s += '"'; break;
                             default:
                                 throw new LexerException(
                                     string.Format("unrecognized escape character {0}", input.PeekCharacter()),

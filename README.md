@@ -21,23 +21,39 @@
   - MonoDevelop Version 7.4 (build 1035)
   - NUnit 3.10.1
 
-#### Building
-- To build the program you must install the development environment.
+#### Environment
+- You must first install the development environment.
   - Mono installation: http://www.mono-project.com/download/stable/
     - Use `sudo apt-get install mono-complete`
   - Monodevelop installation: http://www.monodevelop.com/download/
-  - Install NUNIT???
 - Download or clone the Interpreter repository.
 - Open MonoDevelop and in the opening screen select to open a solution.
 - In the dialog that opens find `Interpreter.sln` which is inside the repository clone, select it and click open.
-- To build the program select `build` at the top menu bar and select `build all`.
-- After building go to `/Interpreter/bin/Debug` inside your repository clone and in it you can see `Interpreter.exe`.
+- Make sure that you have internet connection as you open the sln file since NUnit is downloaded if it does not exist.
+  - If NUnit it is not installed automatically, you should make sure you have NuGet package manager installed in MonoDevelop and then install NUnit package with it.
 
-#### Running
-- To run the program you must first enable executing rights to the `Interpreter.exe`. This can usually be done by right clicking it, selecting properties, selecting permissions and ticking the box for allowing to execute the file as a program.
-- Create a file you want to execute next to the `Interpreter.exe`, for example `code.txt` containing `print "Hello world\n";`.
-- Open a command prompt in the same folder as the `Interpreter.exe`
-- Then use the command `./Interpreter.exe code.txt` to run the file you created.
+#### Development
+- For development
+  - edit `TestCode.txt` inside the cloned repository to contain your code.
+    - the file is in gitignore and will not be in source control.
+    - the file is preconfigured to be used by default when the interpreter is run through MonoDevelop.
+  - select `Debug` from the dropdown on the top left.
+  - press the play button to compile and run the interpreter with `TestCode.txt` as the input file.
+  - To run NUnit tests from the top navigation in MonoDevelop select `Run` and under it select `Run unit tests`.
+
+#### Releasing
+- For release
+  - to build the program select `Release` from the top left.
+  - click `build` at the top menu bar and select `build all`.
+  - After building go to `/Interpreter/bin/Release` inside your repository clone and in it you can see `Interpreter.exe`.
+  - You can move the `Interpreter.exe` to some other folder if you want to.
+  - To run the program you must first enable executing rights to the `Interpreter.exe`. This can usually be done by right clicking it, selecting properties, selecting permissions and ticking the box for allowing to execute the file as a program.
+  - Create a file you want to execute next to the `Interpreter.exe`, for example `code.txt` containing `print "Hello world\n";`.
+  - Open a command prompt in the same folder as the `Interpreter.exe`
+  - Then use the command `./Interpreter.exe code.txt` to run the file you created.
+    - The program takes exactly one argument, which is the absolute or relative path to the file to interpret.
+    - The interpreter will print errors if it finds any. The first error printed is the first error found. Any errors printed after that may be caused by the first error detected.
+    - If no errors are detected the code is run and any errors during execution halt the program execution. Assert WILL NOT halt the program execution.
 
 ## LL1 parser grammar
 ```
