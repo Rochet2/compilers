@@ -36,13 +36,27 @@ What is missing from the diagram are the enums, the classes that are used for te
 #### Architectural decisions
 Here are some additional architectural decisions that were made.
 They were not specified or not clearly defined in the specification of the interpreter.
-- assert will stop the program from executing if the assertion fails.
-- for-loop control variable will be at end value + 1 after the for loop ends or if for loop is never entered then it will be set to the for-loop range beginning value.
-- if a non numeric value is read from input during program execution the program will keep on reading until a number is read.
-- editing the control variable is prohibited through checking mutability during semantic analysis and runtime.
-- nested block comments such as `/*/**/*/` are accepted, however `/*/**/` is not. All block comments must be complete.
-- boolean < operator is defined so that it is true when left operand is false and right operand is true, false otherwise.
-- default values for each type are: int `0`, string `""`, bool `false`.
+- assert will stop the program from executing if the assertion fails. Programs with failed assertions are running in undefined manner.
+- for-loop control variable will be at end value + 1 after the for loop ends or if for loop is never entered then it will be set to the for-loop range beginning value. This appeared to be the needed behavior for one of the example programs given in the specification.
+- if a non numeric or invalid numeric value is read from input during program execution the program will keep on reading until a valid number is read. This is for convenience as you may press enter or input a letter accidentally.
+- editing the control variable is prohibited through checking mutability during semantic analysis and runtime. Control variable immutability was specified in the specification, but whether the control variable should be only internally immutable or immutable in the whole program was not specified, so the latter was chosen.
+- nested block comments such as `/*/**/*/` are accepted, however `/*/**/` is not. All block comments must be complete. The reason for this is that in case the second example is accepted we would need to read the whole input and backtrack if the comment end was not found for the outer block comment start - we want to avoid backtracking.
+- boolean < operator is defined so that it is true when left operand is false and right operand is true, false otherwise. The specification defined that all types need to have < operator, but it did not specify how. Other values have common approaches, but booleans do not usually implement < operator. Due to this a decision was made on how to implement it.
+- default values for each type are: int `0`, string `""`, bool `false`. These were not specified, but are commonly used elsewhere.
+- a number value that is too high for the C# runtime is considered an error or invalid. This decision was made due to limitations imposed by implementation specific types.
+- an invalid program will not be attempted to be fixed. This was decided because we may not know what was intended and we may cause completely invalid errors from making wrong deductions.
+- a program with multiple lexical and parse errors will have all the detected errors printed, however only the first printed error is completely valid and any subsequent errors can be caused by the first error. Additionally when any error occurs in this phase the semantic analysis and interpreter are not run. This was decided because the running the program and the semantics of a program that has invalid tokens or syntax will not properly make sense and reporting of multiple errors is very convenient.
+- a program with multiple semantic errors will have all the errors printed, however only the first printed error is completely valid and any subsequent errors can be caused by the first error. Any semantic error blocks the interpreter from running.
+- lexical analysis will skip to the next new line in case an error occurs. This was decided because reporting of multiple errors is very convenient and an error, such as a string error, will cause the rest of the line to be considered as a string.
+- strings are limited to the end of a new line. Any new lines in a string must be represented with the escape sequence `\n`. This was decied because now runaway strings will not block reporting of errors on other lines.
+- strings only support the following escape sequences: `\n` for new line, `\"` for a quote, `\t` for a tab. These were chosen because they are most useful.
+- parser will skip to the next statement if an error occurs. This was decided because statements should be logically sound entities we can easily tell apart from each other and reporting errors on each statement is convenient.
+- semantic analysis will skip to the next statement if an error occurs. This was decided because statements should be logically sound entities we can easily tell apart from each other and reporting errors on each statement is convenient.
+- a blockcomment can contain new lines and if the comment has no ending it will cause the whole rest of the program to be attempted to be interpreted as a block comment, which will fail.
+- invalid operators are not considered invalid until the semantic analysis or running the interpreter. This allows a better error message output.
+- for-loops only support number ranges. This was decided because it is logical.
+- for-loops can have bigger begin than end index, which causes the for-loop to never execute. This was decided because it is common.
+
 
 ## Testing
 - Clearly describe your testing, and the design of test data.
