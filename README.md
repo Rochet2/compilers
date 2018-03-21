@@ -10,6 +10,40 @@
 - Explain your diagrams.
 - Tell about possible shortcomings of your program (if well documented they might be partly forgiven).
 
+![Diagram of the high level architecture](https://github.com/Rochet2/compilers/blob/master/documents/Architecture.svg)
+
+The UML diagram above shows how relevant parts of the program are connected on a high level.
+Next we will explain the purpose of each of the parts in the diagram.
+
+- `IO` is an abstract class that IO classes inherit. The IO classes implement read and write functions to support input and output operations. The purpose of the `IO` class is to abstract away the IO implementation to allow flexibility for example for testing.
+- `StringIO` implements `IO` and it is initialized with a specific input and it contains a string where it outputs any output. The purpose of it is to allow in memory printing of IO.
+- `Position` is a class that contains information about a location in the source file. It has the absolute character position, line number and the character number on that line (column).
+- The `InputBuffer` owns a `Position` that it updates to match the position of input it has read. The purpose of the `InputBuffer` is to read characters from the input to the buffer to allow having a lookahead that we can peek.
+- `Lexeme` is a class that contains a `Position`, a token string and the type of the token. The purpose of it is to contain all relevant information from the lexical analysis of the token.
+- The `Lexer` owns an `InputBuffer` and it reads characters from it. The purpose of the `Lexer` is to perform lexical analysis on the characters being read and produce `Lexeme` from them. It uses the `InputBuffer`'s lookahead to try deduce what type of token it should be expecting. It will copy the `Position` of the `InputBuffer` to the `Lexeme` it produces. The `Lexer` owns an IO instance where it outputs any error messages.
+- `ASTNode` is an abstract class that contains the type of the `ASTNode` and may contain a `Lexeme`. The purpose of the `ASTNode` is to allow building the abstract syntax tree (AST) from tokens. The child classes that inherit this class can specialize themselves in different ways.
+- `ASTVariableNode` is not in the diagram, but it is an abstract class that inherits `ASTNode`. The purpose of it is to act as the common high level class for all values that can be printed or stored. It contains an overridable function that returns the value of the variable.
+- `Parser` is a class that owns a `Lexer` to read tokens from and an `IO` instance to output error messages to. The purpose of it is to read `Lexeme` from the `Lexer` and build an AST from them by creating `ASTNode`s according to an LL1 grammar it follows.
+- `Visitor` is an abstract class that implements basic utilities for Visit pattern to be used on an AST made of `ASTNode`. It owns an `ASTNode` which is the root of the AST and an `IO` to which it outputs any error messages. The class also implements a variable store and type assertion and checking functions to be used by the child classes that inherit it. The purpose of the `Visitor` class is to provide commonly used functionality for other visitor pattern classes that walk through the AST.
+- `Analysis` is a class that inherits the `Visitor` class. The purpose of it is to implement the visit functions and other functionaltiy needed for performing semantic analysis on an AST. It can throw `VisitorException`, which is catched and outputted by the `Visitor` super class.
+- `ExpressionPrinter` is a class that inherits the `Visitor` class. The purpose of it is to implement the visit functions and other functionaltiy needed for printing the tokens of an `ASTNode` tree, which consists of an expression, to the given `IO`. It can throw `VisitorException`, which is catched and outputted by the `Visitor` super class.
+- `Interpreter` is a class that inherits the `Visitor` class. The purpose of it is to implement the visit functions and other functionaltiy needed for interpreting an AST. It will use the inherited `IO` to read user input during execution when needed. It also uses `ExpressionPrinter` to walk the assertion condition expression for printing the expression in a diagnostic message. To catch the output of the `ExpressionPrinter` it will use `StringIO`. It can throw `VisitorException`, which is catched and outputted by the `Visitor` super class.
+- The `MainClass`, which contains the program entry point, will create an instance of an `IO` and `InputBuffer` and then give them to all class instances it creates. Then it will create a `Lexer` and run it, create a `Parser` and run it, create an `Analysis` and run it and finally create an `Interpreter` and run it. At each stage it can exit if errors block it from continuing.
+
+
+What is missing from the diagram are the enums, the classes that are used for testing, the classes that extend `ASTNode`, exception classes, the main program class that uses most other classes and the ConsoleIO class that the main program creates to be used as the IO when the Main function is run. Also any standard library classes are not shown. Connections that are not shown are the indirect connections for example where `Analysis` could print the `Position` of a `Lexeme`.
+
+#### Architectural decisions
+Here are some additional architectural decisions that were made.
+They were not specified or not clearly defined in the specification of the interpreter.
+- assert will stop the program from executing if the assertion fails.
+- for-loop control variable will be at end value + 1 after the for loop ends or if for loop is never entered then it will be set to the for-loop range beginning value.
+- if a non numeric value is read from input during program execution the program will keep on reading until a number is read.
+- editing the control variable is prohibited through checking mutability during semantic analysis and runtime.
+- nested block comments such as `/*/**/*/` are accepted, however `/*/**/` is not. All block comments must be complete.
+- boolean < operator is defined so that it is true when left operand is false and right operand is true, false otherwise.
+- default values for each type are: int `0`, string `""`, bool `false`.
+
 ## Testing
 - Clearly describe your testing, and the design of test data.
 - Tell about possible shortcomings of your program (if well documented they might be partly forgiven).
@@ -35,7 +69,6 @@
 #### Development
 - For development
   - edit `TestCode.txt` inside the cloned repository to contain your code.
-    - the file is in gitignore and will not be in source control.
     - the file is preconfigured to be used by default when the interpreter is run through MonoDevelop.
   - select `Debug` from the dropdown on the top left.
   - press the play button to compile and run the interpreter with `TestCode.txt` as the input file.
