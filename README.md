@@ -123,6 +123,8 @@ Any other tokens are matched as the token themselves - these are NOT regex patte
 - `-`
 - `/`
 - `*`
+
+
 Additionally any whitespace is skipped.
 Other tokens are handled as unexpected tokens.
 
@@ -165,3 +167,9 @@ IDENT -> identifier.
 UNARYOP -> unaryop.
 OP -> op.
 ```
+
+## AST representation
+
+
+## Error handling
+
