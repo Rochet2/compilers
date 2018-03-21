@@ -181,7 +181,7 @@ namespace Interpreter
             var node = new Expression(); // expression
             node.lexeme = currentLexeme;
             node.leftOperand = OPND();
-            node.expressionTail = EXPRTAIL(); // fill binary expression if can
+            node.binaryOperator = EXPRTAIL(); // fill binary expression if can
             return node;
         }
 
@@ -289,7 +289,7 @@ namespace Interpreter
             if (node.statement == null)
                 return null; // no more statements found
             Consume(";", TokenType.SEPARATOR);
-            node.statementstail = STMTSTAIL();
+            node.statementtail = STMTSTAIL();
             return node;
         }
 
@@ -300,7 +300,7 @@ namespace Interpreter
             if (node.statement == null)
                 return null; // not even a single statement found
             Consume(";", TokenType.SEPARATOR);
-            node.statementstail = STMTSTAIL();
+            node.statementtail = STMTSTAIL();
             return node;
         }
 

@@ -44,9 +44,9 @@ namespace Interpreter
     /*
      * Abstract class that all AST variable nodes inherit.
      */
-    public abstract class ASTVariable : ASTNode
+    public abstract class ASTVariableNode : ASTNode
     {
-        public ASTVariable(ASTNodeType type) : base(type)
+        public ASTVariableNode(ASTNodeType type) : base(type)
         {
         }
 
@@ -69,7 +69,7 @@ namespace Interpreter
         }
 
         public ASTNode leftOperand;
-        public ASTNode expressionTail;
+        public ASTNode binaryOperator;
     }
 
     public class BinaryOperator : ASTNode
@@ -83,7 +83,7 @@ namespace Interpreter
         public ASTNode rightOperand;
     }
 
-    public class Number : ASTVariable
+    public class Number : ASTVariableNode
     {
         public Number(string value) :
             base(ASTNodeType.NUMBER)
@@ -119,7 +119,7 @@ namespace Interpreter
         public int value;
     }
 
-    public class String : ASTVariable
+    public class String : ASTVariableNode
     {
         public String(string value) :
             base(ASTNodeType.STRING)
@@ -135,7 +135,7 @@ namespace Interpreter
         public string value;
     }
 
-    public class Boolean : ASTVariable
+    public class Boolean : ASTVariableNode
     {
         public Boolean(bool value) :
             base(ASTNodeType.BOOLEAN)
@@ -222,7 +222,7 @@ namespace Interpreter
         }
 
         public ASTNode statement;
-        public ASTNode statementstail;
+        public ASTNode statementtail;
     }
 
     public class Declaration : ASTNode

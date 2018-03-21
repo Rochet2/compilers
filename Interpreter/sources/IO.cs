@@ -50,7 +50,7 @@ namespace Interpreter
     {
         public StringIO() { this.input = ""; }
         public StringIO(string input) { this.input = input; }
-        
+
         public override void Write(string str)
         {
             output += str;

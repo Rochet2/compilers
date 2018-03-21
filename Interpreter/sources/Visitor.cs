@@ -186,13 +186,13 @@ namespace Interpreter
          */
         public class Variable
         {
-            public Variable(ASTVariable variable, bool immutable = false)
+            public Variable(ASTVariableNode variable, bool immutable = false)
             {
                 this.value = variable;
                 this.immutable = immutable;
             }
 
-            public readonly ASTVariable value;
+            public readonly ASTVariableNode value;
             public bool immutable = false;
         }
 

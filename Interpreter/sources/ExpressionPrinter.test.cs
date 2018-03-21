@@ -1,9 +1,9 @@
 ﻿using NUnit.Framework;
 using System;
-namespace Interpreter
+namespace Interpreter.sources
 {
     [TestFixture()]
-    public class ProgramTest
+    public class ExpressionPrinterTest
     {
         [Test()]
         public void TestCase()
