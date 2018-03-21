@@ -43,10 +43,8 @@ namespace Interpreter
         Lexeme Consume(TokenType t)
         {
             var lexeme = currentLexeme;
-            if (lexeme == null)
-                throw new ParserException(string.Format("expected token of type {0}", t), null);
-            if (lexeme.type != t)
-                throw new ParserException(string.Format("expected token of type {0}, got {1}", t, lexeme == null ? "null" : lexeme.ToString()), lexeme);
+            if (lexeme == null || lexeme.type != t)
+                throw new ParserException(string.Format("expected token of type {0}", t), lexeme);
             NextLexeme();
             return lexeme;
         }
@@ -60,10 +58,8 @@ namespace Interpreter
         Lexeme Consume(string s, TokenType t)
         {
             var lexeme = currentLexeme;
-            if (lexeme == null)
-                throw new ParserException(string.Format("expected token {{{0}, \"{1}\"}}", t, s), null);
-            if (lexeme.token != s || lexeme.type != t)
-                throw new ParserException(string.Format("expected token {{{0}, \"{1}\"}}, got {2}", t, s, lexeme == null ? "null" : lexeme.ToString()), lexeme);
+            if (lexeme == null || lexeme.token != s || lexeme.type != t)
+                throw new ParserException(string.Format("expected token {{{0}, \"{1}\"}}", t, s), lexeme);
             NextLexeme();
             return lexeme;
         }
@@ -100,29 +96,33 @@ namespace Interpreter
 
         ASTNode NUM()
         {
-            var node = new Number(currentLexeme.token);
-            node.lexeme = Consume(TokenType.NUMBER);
+            var lexeme = Consume(TokenType.NUMBER);
+            var node = new Number(lexeme.token);
+            node.lexeme = lexeme;
             return node;
         }
 
         ASTNode STR()
         {
-            var node = new String(currentLexeme.token);
-            node.lexeme = Consume(TokenType.STRING);
+            var lexeme = Consume(TokenType.STRING);
+            var node = new String(lexeme.token);
+            node.lexeme = lexeme;
             return node;
         }
 
         Identifier IDENT()
         {
-            var node = new Identifier(currentLexeme.token);
-            node.lexeme = Consume(TokenType.IDENTIFIER);
+            var lexeme = Consume(TokenType.IDENTIFIER);
+            var node = new Identifier(lexeme.token);
+            node.lexeme = lexeme;
             return node;
         }
 
         ASTNode TYPE()
         {
-            var node = new TypeName(currentLexeme.token);
-            node.lexeme = Consume(TokenType.KEYWORD);
+            var lexeme = Consume(TokenType.KEYWORD);
+            var node = new TypeName(lexeme.token);
+            node.lexeme = lexeme;
             return node;
         }
 
@@ -146,6 +146,8 @@ namespace Interpreter
 
         ASTNode OPND()
         {
+            if (currentLexeme == null)
+                throw new ParserException("operand expected", currentLexeme);
             switch (currentLexeme.type)
             {
                 case TokenType.SEPARATOR:
@@ -174,12 +176,12 @@ namespace Interpreter
 
         ASTNode EXPR()
         {
-            if (LexemeContains(TokenType.OPERATOR))
+            if (LexemeContains(TokenType.OPERATOR)) // unary
                 return UNARY();
-            var node = new Expression();
+            var node = new Expression(); // expression
             node.lexeme = currentLexeme;
             node.leftOperand = OPND();
-            node.expressionTail = EXPRTAIL();
+            node.expressionTail = EXPRTAIL(); // fill binary expression if can
             return node;
         }
 
@@ -251,7 +253,7 @@ namespace Interpreter
             Consume("do", TokenType.KEYWORD);
             node.statements = STMTS();
             if (node.statements == null) // no statements found inside for loop
-                throw new ParserException(string.Format("statement expected in for loop"), currentLexeme);
+                throw new ParserException("no statements in for loop", currentLexeme);
             Consume("end", TokenType.KEYWORD);
             Consume("for", TokenType.KEYWORD);
             return node;
@@ -309,10 +311,8 @@ namespace Interpreter
         {
             NextLexeme(); // get first lexeme
             ASTNode ast = STMTS();
-            if (ast == null) // found no statements
-                throw new ParserException(string.Format("statement expected"), currentLexeme);
-            if (currentLexeme != null) // tokens exist after statements
-                throw new ParserException("unexpected token after program statements", currentLexeme);
+            if (ast == null || currentLexeme != null) // found no statements or tokens exist after statements
+                throw new ParserException("statement expected", currentLexeme);
             return ast;
         }
 
@@ -363,9 +363,9 @@ namespace Interpreter
         {
             errored = true;
             if (e.lexeme == null)
-                io.WriteLine("Parser error at <end of file>: {0}, current token: {1}", e.Message, e.lexeme.ToString());
+                io.WriteLine("Parser error at <end of file>: {0}, got no token", e.Message);
             else
-                io.WriteLine("Parser error at {0}: {1}, current token: {2}", e.lexeme.position, e.Message, e.lexeme.ToString());
+                io.WriteLine("Parser error at {0}: {1}, got token: {2}", e.lexeme.position, e.Message, e.lexeme.ToString());
             SkipToNextStatement();
         }
 
