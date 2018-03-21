@@ -97,7 +97,36 @@ They were not specified or not clearly defined in the specification of the inter
     - The interpreter will print errors if it finds any. The first error printed is the first error found. Any errors printed after that may be caused by the first error detected.
     - If no errors are detected the code is run and any errors during execution halt the program execution. Assert WILL NOT halt the program execution.
 
-## LL1 parser grammar
+## Token patterns
+- Number, regex: `%d+`
+- Comment, regex: `//[^\n]*`
+- String, regex: `"(\\[^\n]|[^"\n])*"`
+- Block comment, regular definition:
+  ```
+  comment := "/*" commentend
+  commentend := ([^/][^*] | comment)* "*/"
+  ```
+- Identifier, regex: `(\a|_)(\a|\d|_)*` any identifier that matches a list of keywords is converted to a keyword
+
+Any other tokens are matched as the token themselves - these are NOT regex patterns or regular definitions - it makes little sense describing them with regex or similar. They are the following:
+- `:=`
+- `..`
+- `(`
+- `)`
+- `:`
+- `;`
+- `<`
+- `=`
+- `!`
+- `&`
+- `+`
+- `-`
+- `/`
+- `*`
+Additionally any whitespace is skipped.
+Other tokens are handled as unexpected tokens.
+
+## LL1 grammar
 ```
 STMTS -> STMT ";" STMTSTAIL
 STMTSTAIL -> STMTS | ε
@@ -109,7 +138,7 @@ OPND -> INT | STRING | IDENT | "(" EXPR ")"
 TYPE -> "int" | "string" | "bool"
 ```
 
-### Verification of the grammar
+#### Verification of the grammar
 Verification results:
 - All nonterminals are reachable and realizable
 - The nullable nonterminals are: STMTSTAIL VARTAIL EXPRTAIL
