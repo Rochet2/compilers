@@ -1,2 +1,5 @@
-*.userprefs
+**/.userprefs
+.vs/
+bin/
+obj/
 
