@@ -41,7 +41,7 @@ namespace Interpreter
          */
         public static void Main(string[] args)
         {
-            IO io = new IOConsole();
+            IO io = new ConsoleIO();
             if (args.Length != 1)
             {
                 io.WriteLine("You must give 1 program argument, which is the input file path");

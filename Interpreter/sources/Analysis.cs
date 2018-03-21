@@ -8,9 +8,9 @@
             this.visitorFunctions.Add(ASTNodeType.STRING, x => x);
             this.visitorFunctions.Add(ASTNodeType.BOOLEAN, x => x);
             this.visitorFunctions.Add(ASTNodeType.TYPENAME, x => x);
-            this.visitorFunctions.Add(ASTNodeType.UNARYOP, x =>
+            this.visitorFunctions.Add(ASTNodeType.UNARYOPERATOR, x =>
             {
-                var op = As<UnaryOperator>(x, ASTNodeType.UNARYOP);
+                var op = As<UnaryOperator>(x, ASTNodeType.UNARYOPERATOR);
                 var v = ExpectNotNull(Visit(op.operand), op.operand);
                 if (Is<Boolean>(v))
                 {
@@ -28,7 +28,7 @@
                 var exp = As<Expression>(x, ASTNodeType.EXPRESSION);
                 if (exp.expressionTail == null)
                     return ExpectNotNull(Visit(exp.leftOperand), exp.leftOperand);
-                var rtail = As<BinaryOperator>(exp.expressionTail, ASTNodeType.BINARYOP);
+                var rtail = As<BinaryOperator>(exp.expressionTail, ASTNodeType.BINARYOPERATOR);
                 var opl = ExpectNotNull(Visit(exp.leftOperand), exp.leftOperand);
                 var opr = ExpectNotNull(Visit(rtail.rightOperand), rtail.rightOperand);
                 if (Is<Number>(opl) && Is<Number>(opr))
@@ -77,9 +77,9 @@
                 Expect<ASTVariable>(Visit(f.printedValue), ASTNodeType.VARIABLE, f.printedValue);
                 return null;
             });
-            this.visitorFunctions.Add(ASTNodeType.STATEMENTS, x =>
+            this.visitorFunctions.Add(ASTNodeType.STATEMENT, x =>
             {
-                var v = As<Statements>(x, ASTNodeType.STATEMENTS);
+                var v = As<Statements>(x, ASTNodeType.STATEMENT);
                 try
                 {
                     ExpectNull(Visit(v.statement), v.statement);
@@ -129,7 +129,7 @@
             this.visitorFunctions.Add(ASTNodeType.IDENTIFIER, x =>
             {
                 var v = As<Identifier>(x, ASTNodeType.IDENTIFIER);
-                return GetVar(v).value;
+                return GetVariable(v).value;
             });
             this.visitorFunctions.Add(ASTNodeType.DECLARATION, x =>
             {
@@ -190,9 +190,9 @@
                 control.immutable = false;
                 return null;
             });
-            this.visitorFunctions.Add(ASTNodeType.ASSIGN, x =>
+            this.visitorFunctions.Add(ASTNodeType.ASSIGNMENT, x =>
             {
-                var v = As<Assignment>(x, ASTNodeType.ASSIGN);
+                var v = As<Assignment>(x, ASTNodeType.ASSIGNMENT);
                 var ident = As<Identifier>(v.identifier, ASTNodeType.IDENTIFIER);
                 var variable = ExpectMutable(ident, v.identifier);
                 var value = Visit(v.value);

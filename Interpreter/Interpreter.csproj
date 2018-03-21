@@ -51,6 +51,8 @@
     <Compile Include="sources\Parser.cs" />
     <Compile Include="sources\Visitor.cs" />
     <Compile Include="Program.test.cs" />
+    <Compile Include="sources\ExpressionPrinter.cs" />
+    <Compile Include="sources\IO.test.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

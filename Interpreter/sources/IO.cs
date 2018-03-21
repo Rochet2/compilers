@@ -10,36 +10,31 @@ namespace Interpreter
      */
     public abstract class IO
     {
-        public abstract void WriteLine(string str);
-        public abstract void WriteLine(string fmt, params object[] args);
+        public virtual void WriteLine(string str)
+        {
+            Write(str);
+            Write("\n");
+        }
+        public virtual void WriteLine(string fmt, params object[] args)
+        {
+            WriteLine(string.Format(fmt, args));
+        }
         public abstract void Write(string str);
-        public abstract void Write(string fmt, params object[] args);
+        public virtual void Write(string fmt, params object[] args)
+        {
+            Write(string.Format(fmt, args));
+        }
         public abstract int Read();
     }
 
     /*
      * Normal console input and ouput
      */
-    public class IOConsole : IO
+    public class ConsoleIO : IO
     {
-        public override void WriteLine(string str)
-        {
-            Console.WriteLine(str);
-        }
-
-        public override void WriteLine(string fmt, params object[] args)
-        {
-            Console.WriteLine(fmt, args);
-        }
-
         public override void Write(string str)
         {
             Console.Write(str);
-        }
-
-        public override void Write(string fmt, params object[] args)
-        {
-            Console.Write(fmt, args);
         }
 
         public override int Read()
@@ -49,32 +44,46 @@ namespace Interpreter
     }
 
     /*
+     * String input and output.
+     */
+    public class StringIO : IO
+    {
+        public StringIO() { this.input = ""; }
+        public StringIO(string input) { this.input = input; }
+        
+        public override void Write(string str)
+        {
+            output += str;
+        }
+
+        public override int Read()
+        {
+            if (input.Length < currentInputPosition)
+                return -1;
+            return input[currentInputPosition++];
+        }
+
+        public string input;
+        public string output = "";
+        private int currentInputPosition = 0;
+    }
+
+    /*
      * IO used for testing.
      * Can be initialized with multiple predefined input strings,
      * which are considered to be separate lines.
      * Exposes output variable, which is a list of strings written to output.
      */
-    public class IOTest : IO
+    public class TestIO : IO
     {
-        public IOTest()
+        public TestIO()
         {
             input = "";
         }
 
-        public IOTest(params string[] a)
+        public TestIO(params string[] a)
         {
             input = string.Join("\n", a);
-        }
-
-        public override void WriteLine(string str)
-        {
-            Write(str);
-            output[output.Count - 1] += '\n';
-        }
-
-        public override void WriteLine(string fmt, params object[] args)
-        {
-            WriteLine(string.Format(fmt, args));
         }
 
         public override void Write(string str)
@@ -83,11 +92,6 @@ namespace Interpreter
                 output.Add(str);
             else
                 output[output.Count - 1] += str;
-        }
-
-        public override void Write(string fmt, params object[] args)
-        {
-            Write(string.Format(fmt, args));
         }
 
         public override int Read()

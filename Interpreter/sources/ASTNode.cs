@@ -18,12 +18,12 @@ namespace Interpreter
         ASSERT,
         READ,
         DECLARATION,
-        ASSIGN,
+        ASSIGNMENT,
         FORLOOP,
         EXPRESSION,
-        BINARYOP,
-        UNARYOP,
-        STATEMENTS,
+        BINARYOPERATOR,
+        UNARYOPERATOR,
+        STATEMENT,
     }
 
     /*
@@ -75,7 +75,7 @@ namespace Interpreter
     public class BinaryOperator : ASTNode
     {
         public BinaryOperator() :
-            base(ASTNodeType.BINARYOP)
+            base(ASTNodeType.BINARYOPERATOR)
         {
         }
 
@@ -195,7 +195,7 @@ namespace Interpreter
     public class UnaryOperator : ASTNode
     {
         public UnaryOperator() :
-            base(ASTNodeType.UNARYOP)
+            base(ASTNodeType.UNARYOPERATOR)
         {
         }
 
@@ -217,7 +217,7 @@ namespace Interpreter
     public class Statements : ASTNode
     {
         public Statements() :
-            base(ASTNodeType.STATEMENTS)
+            base(ASTNodeType.STATEMENT)
         {
         }
 
@@ -240,7 +240,7 @@ namespace Interpreter
     public class Assignment : ASTNode
     {
         public Assignment() :
-            base(ASTNodeType.ASSIGN)
+            base(ASTNodeType.ASSIGNMENT)
         {
         }
 

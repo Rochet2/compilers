@@ -27,6 +27,8 @@ namespace Interpreter
          */
         public ASTNode Visit(ASTNode node)
         {
+            if (node == null)
+                throw new VisitorException("trying to visit a null node");
             return visitorFunctions[node.type](node);
         }
 
@@ -101,7 +103,7 @@ namespace Interpreter
          * If variable not found throws a VisitorException with an
          * error message and errorNode or ident as source of the error.
          */
-        public Variable GetVar(Identifier identifier, ASTNode errorNode = null)
+        public Variable GetVariable(Identifier identifier, ASTNode errorNode = null)
         {
             if (!variables.ContainsKey(identifier.name))
                 throw new VisitorException(string.Format("using undefined identifier {0}", identifier.name), errorNode ?? identifier);
@@ -116,7 +118,7 @@ namespace Interpreter
          */
         public Variable ExpectMutable(Identifier identifier, ASTNode errorNode = null)
         {
-            var variable = GetVar(identifier, errorNode);
+            var variable = GetVariable(identifier, errorNode);
             if (!variable.immutable)
                 return variable;
             throw new VisitorException(string.Format("trying to change immutable variable {0}", identifier.name), errorNode ?? identifier);
@@ -130,10 +132,35 @@ namespace Interpreter
         public void PrintError(VisitorException e)
         {
             errored = true;
-            if (e.node == null || e.node.lexeme == null)
-                io.WriteLine("{0} error at ?: {1}", name, e.Message);
+            string errorMessage = string.Format("{0} error", name);
+            if (e.node != null && e.node.lexeme != null)
+            {
+                errorMessage = string.Format(
+                    "{0} at {1} token {2}",
+                    errorMessage,
+                    e.node.lexeme.position,
+                    e.node.lexeme
+                );
+            }
             else
-                io.WriteLine("{0} error at {1}: {2}", name, e.node.lexeme.position, e.Message);
+            {
+                errorMessage = string.Format(
+                    "{0} at {1}",
+                    errorMessage,
+                    "<runtime generated code>"
+                );
+            }
+            errorMessage = string.Format(
+                "{0} in node {1}",
+                errorMessage,
+                e.node.type
+            );
+            errorMessage = string.Format(
+                "{0}:",
+                errorMessage
+            );
+            io.WriteLine(errorMessage);
+            io.WriteLine(e.Message);
         }
 
         /*
