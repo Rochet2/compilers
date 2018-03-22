@@ -187,4 +187,122 @@ end for;
 ![Example AST tree of a small program](https://github.com/Rochet2/compilers/blob/master/documents/ExampleAST.svg)
 
 ## Error handling
+Error handling is done by exceptions. Any error that occurs throws an exception with any relevant information such as an error message and current position or node. The caller of the function or some higher level will catch the exception and handle it by aborting or alternatively skipping to the next line or statement to continue reporting errors. Any error detected will set `errored` flag to true for that specific object that experienced the error.
 
+Below are listed the specifics for each part of the program. Note that the amount of errors listed may not match the amount of example programs because the list of errors is a list of errors that are tested in semantic and runtime analysis and may not be producible through code unless the interpreter is broken or alternatively more cases were demonstrated for some checked errors.
+
+#### Lexer
+The Lexer will throw an exception when an unexpected charcter is found or no character is found when one is expected. This charcter can be either unknown or unexpected in the middle of some token pattern. The exception is catched in the function that calls any pattern recognisers and it will set the error flag to true, print the error message and skip to the next new line if any. The reason for skipping to the next line is that any errors will be limited to that line and strings will also end at the new line, which prevents falsely interpreting for example a semicolon inside a string as the end of a statement. The error message will contain the line and column on that line where the error originated from. Some errors may contain extra information, for example an error for a string may contain the position where the error occurred as well as the position where the string starts at. Lexer errors allow parsing to be done, but will not allow semantic analysis or interpreting to start since the program cannot be valid if some tokens are missing.
+
+List of checked errors:
+```
+unrecognized token
+too high constant number
+unknown escape character in string literal
+endless string
+endless blockcomment
+```
+
+Example programs:
+```
+unrecognized token #;
+print 99999999999999999999999; // too high constant
+print "test \x"; // unknown escape character in string literal
+"endless string
+/* endless block comment
+```
+
+#### Parser
+The Parser will throw an exception when an unexpected token is found or no token is found when one is expected. The tokens are checked for their content and type when applicable. The exception is catched in either in the function that handles statements or the root function that initiates the whole parsing process and after catching the exception it is handled by setting the error flag to true, printing the error message and skipping to the next statement if any. The reason for skipping to the statement is that any errors will be limited to a statement and the statements can be identified through the semicolon easily. The reason for the two level catch is that statements can be inside a for loop and we want to process all statements inside a for loop as well as the main program statements. Additionally the root of the parsing can throw errors if there are tokens after the program statements so we must catch errors outside of the statement handling. Parsing errors will not allow semantic analysis or interpreting to start since the program cannot be valid if the program does not conform to the grammar. The error messages will contain information about what token was expected, what was received instead and from where in the source code the error originated from.
+
+List of checked errors:
+```
+token type does not match expected
+token value does not match expected
+empty statement
+missing tokens trigger "expected <something>"
+tokens after program end
+```
+
+Example programs:
+```
+assert 0 token type does not match expected 0;
+assert ) token value does not match expected (;
+; // empty statement
+var X : int := 4 + (6 * 2; // missing tokens
+var X : int := 4 + (6 *; // missing tokens
+var X : int := 4 + (6; // missing tokens
+var X : int := 4 + (; // missing tokens
+var X : int := 4 +; // missing tokens
+var X : int :=; // missing tokens
+var X :; // missing tokens
+var X; // missing tokens
+var; // missing tokens
+123 // tokens after program end
+```
+```
+// missing tokens and program ends
+var X : int := 4 + (6 * 2
+```
+
+#### Analyser
+The Analyser will throw an exception when a semantic error is detected. The types, definitions, immutability, operators and other constraints are checked from the AST nodes. The exception is catched in either in the function that handles statements or the root function that initiates the whole analysing process and after catching the exception it is handled by setting the error flag to true, printing the error message and skipping to the next statement if any. The reason for skipping to the statement is that statements are logical entities, any errors will be limited to a statement and the statements can be identified easily as they are chained. The reason for the two level catch is that statements can be inside a for loop and we want to process all statements inside a for loop as well as the main program statements. Semantic errors will not allow interpreting to start since the program cannot run without error if the program is not semantically valid.
+
+List of checked errors:
+```
+reassigning variable not defined
+reassigning variable types dont match
+forloop range begin is not number
+forloop range end is not number
+forloop range variable not defined
+forloop range variable is not number
+variable declaration already defined
+variable declaration type unknown
+variable declaration type doesnt match assigned value type
+identifier not defined
+read identifier not defined
+read identifier type not supported (bool)
+assert condition is not boolean
+statements dont return null (untestable)
+print value not printable (untestable)
+binary operator unknown for given operands
+unary operator unknown for given operand
+variable is immutable due to a for loop (cannot assign, read)
+```
+
+Example programs:
+```
+x := 5; // x not defined
+var x : int; x := "string"; // wrong type
+for x in (1=1)..2 do print x; end for; // begin not number
+for x in 1..("str") do print x; end for; // end not number
+for y in 1..2 do print y; end for; // loop variable not defined
+var y : string; for y in 1..2 do print y; end for; // loop variable not a number
+var z : bool; var z : bool; // duplicate define
+var a : print; // unknown variable type
+var b : bool := "str"; // variable type and value mismatch
+print c; // c not defined
+read d; // d not defined
+var e : bool; read e; // e not readable type (bool)
+assert (5); // assert condition not boolean
+print 1&2; // invalid integer operator
+print 1&"a"; // invalid binary operator
+print 1="a"; // invalid binary operator
+print &(1=1); // invalid unary operator
+var x1 : int; for x1 in 1..2 do x1 := 10; end for; // variable is immutable due to a for loop (assign)
+var x2 : int; for x2 in 1..2 do read x2; end for; // variable is immutable due to a for loop (read)
+```
+
+#### Interpreter
+The Interpreter will throw an exception when a runtime error is detected. The types, definitions, immutability, operators and other constraints are checked from the AST nodes. The exception is catched in either in the the root function that initiates the whole program execution and after catching the exception it is handled by setting the error flag to true, printing the error message and aborting completely. The reason for aborting execution is that when an error occurs, any execution after that is undefined behavior.
+
+List of checked errors:
+```
+Same as analyser plus..
+assertion failed
+```
+
+Example programs:
+```
+assert (1=2); // assertion fails, program aborts and an error message is printed. Error message contains the assert condition.
+```
