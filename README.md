@@ -170,6 +170,21 @@ OP -> op.
 
 ## AST representation
 
+All of the nodes contain a Lexeme and the type of the node in addition to data represented in the diagrams below.
+No value can be null unless otherwise specified. All names starting with uppercase name are `ASTNode` child classes. Any names starting with lowercase letter are some common type such as string, or int. Many nodes have alternative node types that they can contain, they are represented as a single node where each node type is separated by an `or`. Any note, such as `can be null`, is marked in parenthesis below the node's possible types. The diagrams are read from top down and they attempt to represent tree structures where the root node is at the top. Any higher node will own all the nodes below it that are connected to it. `Boolean` is a special type which cannot appear in the AST built by the parser because nothing in the grammar can directly define a boolean value, it will however be generated during runtime after evaluating expressions that evaluate to a boolean value. The root node of an AST is a `Statements`, however other nodes are possible to be used as the root with visitors, for example `ExpressionPrinter` assumes the root node to be `UnaryOperator` or `Expression`.
+
+![Diagram of all of the ASTNodes and their contained values](https://github.com/Rochet2/compilers/blob/master/documents/ASTNodes.svg)
+
+
+Below you can see the AST of the following small program:
+```
+var x : int := 1;
+for x in 1..(2+x) do // from 1 to 3
+    print x;
+end for;
+```
+
+![Example AST tree of a small program](https://github.com/Rochet2/compilers/blob/master/documents/ExampleAST.svg)
 
 ## Error handling
 
