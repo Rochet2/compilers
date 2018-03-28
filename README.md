@@ -1,10 +1,10 @@
 # Interpreter
 
 - Course: Compilers https://courses.helsinki.fi/fi/csm14204/119559595
-- Studet: Risto Mikkola
+- Student: Risto Mikkola
 - Project: Interpreter
-- Date of delivery: ??
-- View repository online: https://github.com/Rochet2/compilers/
+- Date of delivery: 31.3.2018
+- View repository and README.md online: https://github.com/Rochet2/compilers/
 
 ## Architecture
 Project repository layout:
@@ -12,6 +12,7 @@ Project repository layout:
 - documents folder contains diagrams, original assignment PDF files and other documents
 - Interpreter folder contains the program source code and tests
 - tests for a file `Filename.cs` are in a file called `Filename.test.cs` in the same folder
+- `Interpreter/TestCode.txt` is a file that is set up to be the file run by MonoDevelop automatically
 
 
 ![Diagram of the high level architecture](documents/Architecture.svg)
@@ -70,7 +71,6 @@ Unit tests:
 - Lexer is tested for all functions
   - including cases such as skipping whitespace and nested comments
   - recognizing all token types (string, number, comment, keyword, identifier, ...)
-- Parser is tested for error flagging
 - setting error flags for each error handling mechanism (Lexer, Parser, ...)
 
 
