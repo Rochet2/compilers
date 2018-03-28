@@ -295,13 +295,21 @@ namespace Interpreter
 
         ASTNode STMTS()
         {
-            var node = new StatementsNode();
-            node.statement = STMT();
-            if (node.statement == null)
-                return null; // not even a single statement found
-            Consume(";", TokenType.SEPARATOR);
-            node.statementtail = STMTSTAIL();
-            return node;
+            try
+            {
+                var node = new StatementsNode();
+                node.statement = STMT();
+                if (node.statement == null)
+                    return null; // not even a single statement found
+                Consume(";", TokenType.SEPARATOR);
+                node.statementtail = STMTSTAIL();
+                return node;
+            }
+            catch (ParserException e)
+            {
+                Error(e);
+            }
+            return ERRORTAIL();
         }
 
         /*
@@ -321,17 +329,17 @@ namespace Interpreter
          * Attempts to read more statements.
          * Prints any subsequent error and calls itself again.
          */
-        void ERRORTAIL()
+        ASTNode ERRORTAIL()
         {
             try
             {
-                STMTSTAIL();
+                return STMTSTAIL();
             }
             catch (ParserException e)
             {
                 Error(e);
-                ERRORTAIL();
             }
+            return ERRORTAIL();
         }
 
         /*
@@ -348,9 +356,8 @@ namespace Interpreter
             catch (ParserException e)
             {
                 Error(e);
-                ERRORTAIL();
             }
-            return null;
+            return ERRORTAIL();
         }
 
         /*

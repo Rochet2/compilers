@@ -1,20 +1,19 @@
 # Interpreter
-
 - Course: Compilers https://courses.helsinki.fi/fi/csm14204/119559595
 - Student: Risto Mikkola
 - Project: Interpreter
 - Date of delivery: 31.3.2018
 - View repository and README.md online: https://github.com/Rochet2/compilers/
 
-## Architecture
-Project repository layout:
+
+## Repository layout
 - project root contains different folders, the licence, readme and project solution file
 - documents folder contains diagrams, original assignment PDF files and other documents
 - Interpreter folder contains the program source code and tests
 - tests for a file `Filename.cs` are in a file called `Filename.test.cs` in the same folder
 - `Interpreter/TestCode.txt` is a file that is set up to be the file run by MonoDevelop automatically
 
-
+## Architecture
 ![Diagram of the high level architecture](documents/Architecture.svg)
 
 The UML diagram above shows how relevant parts of the program are connected on a high level.
