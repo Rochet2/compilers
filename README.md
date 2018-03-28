@@ -4,16 +4,24 @@
 - Studet: Risto Mikkola
 - Project: Interpreter
 - Date of delivery: ??
+- View repository online: https://github.com/Rochet2/compilers/
 
 ## Architecture
-![Diagram of the high level architecture](https://github.com/Rochet2/compilers/blob/master/documents/Architecture.svg)
+Project repository layout:
+- project root contains different folders, the licence, readme and project solution file
+- documents folder contains diagrams, original assignment PDF files and other documents
+- Interpreter folder contains the program source code and tests
+- tests for a file `Filename.cs` are in a file called `Filename.test.cs` in the same folder
+
+
+![Diagram of the high level architecture](documents/Architecture.svg)
 
 The UML diagram above shows how relevant parts of the program are connected on a high level.
 Next we will explain the purpose of each of the parts in the diagram.
 
 - `IO` is an abstract class that IO classes inherit. The IO classes implement read and write functions to support input and output operations. The purpose of the `IO` class is to abstract away the IO implementation to allow flexibility for example for testing.
 - `StringIO` implements `IO` and it is initialized with a specific input and it contains a string where it outputs any output. The purpose of it is to allow in memory printing of IO.
-- `Position` is a class that contains information about a location in the source file. It has the absolute character position, line number and the character number on that line (column).
+- `Position` is a class that contains information about a location in the source file. It has the line number and the character number on that line (column).
 - The `InputBuffer` owns a `Position` that it updates to match the position of input it has read. The purpose of the `InputBuffer` is to read characters from the input to the buffer to allow having a lookahead that we can peek.
 - `Lexeme` is a class that contains a `Position`, a token string and the type of the token. The purpose of it is to contain all relevant information from the lexical analysis of the token.
 - The `Lexer` owns an `InputBuffer` and it reads characters from it. The purpose of the `Lexer` is to perform lexical analysis on the characters being read and produce `Lexeme` from them. It uses the `InputBuffer`'s lookahead to try deduce what type of token it should be expecting. It will copy the `Position` of the `InputBuffer` to the `Lexeme` it produces. The `Lexer` owns an IO instance where it outputs any error messages.
@@ -32,11 +40,11 @@ What is missing from the diagram are the enums, the classes that are used for te
 #### Architectural decisions
 Here are some additional architectural decisions that were made.
 They were not specified or not clearly defined in the specification of the interpreter.
-- assert will stop the program from executing if the assertion fails. Programs with failed assertions are running in undefined manner.
+- assert will stop the program from executing if the assertion fails (condition is false). Programs with failed assertions are running in undefined manner and must be stopped. 
 - for-loop control variable will be at end value + 1 after the for loop ends or if for loop is never entered then it will be set to the for-loop range beginning value. This appeared to be the needed behavior for one of the example programs given in the specification.
 - if a non numeric or invalid numeric value is read from input during program execution the program will keep on reading until a valid number is read. This is for convenience as you may press enter or input a letter accidentally.
 - editing the control variable is prohibited through checking mutability during semantic analysis and runtime. Control variable immutability was specified in the specification, but whether the control variable should be only internally immutable or immutable in the whole program was not specified, so the latter was chosen.
-- nested block comments such as `/*/**/*/` are accepted, however `/*/**/` is not. All block comments must be complete. The reason for this is that in case the second example is accepted we would need to read the whole input and backtrack if the comment end was not found for the outer block comment start - we want to avoid backtracking.
+- nested block comments such as `/*/**/*/` are accepted, however `/*/**/` is not. All block comments must be complete, even the nested ones. The reason for this is that if the second example is accepted we would need to read the whole input to test if another block comment end is found and backtrack if the comment end was not found and we want to avoid backtracking so we do not accept such situations.
 - boolean < operator is defined so that it is true when left operand is false and right operand is true, false otherwise. The specification defined that all types need to have < operator, but it did not specify how. Other values have common approaches, but booleans do not usually implement < operator. Due to this a decision was made on how to implement it.
 - default values for each type are: int `0`, string `""`, bool `false`. These were not specified, but are commonly used elsewhere.
 - a number value that is too high for the C# runtime is considered an error or invalid. This decision was made due to limitations imposed by implementation specific types.
@@ -54,8 +62,29 @@ They were not specified or not clearly defined in the specification of the inter
 - for-loops can have bigger begin than end index, which causes the for-loop to never execute. This was decided because it is common.
 
 ## Testing
-- Clearly describe your testing, and the design of test data.
-- Tell about possible shortcomings of your program (if well documented they might be partly forgiven).
+Testing methods included unit testing and system testing. The tests consist of running the given example programs, programs producing expected errors and ad-hoc testing related to functionality or feature being developed. In short the test data consists of all expected error cases and some known valid programs.
+
+Unit tests:
+- InputBuffer is tested for all functions
+- StringIO is tested for all functions
+- Lexer is tested for all functions
+  - including cases such as skipping whitespace and nested comments
+  - recognizing all token types (string, number, comment, keyword, identifier, ...)
+- Parser is tested for error flagging
+- setting error flags for each error handling mechanism (Lexer, Parser, ...)
+
+
+System tests:
+- all error programs from the `Error handling` section in this document
+- the example programs given in `Mini_pl_syntax_2018` document
+- Parser: `print 1; end; print 2;`, which was causing parsing to stop without errors at the `end;` statement due to incorrect for-loop handling in parser
+- Interpreter: reading of values, writing of values
+
+
+Manually tested:
+- ConsoleIO was tested manually by programs that read and print values
+- Each implemented keyword and functionality during development
+
 
 ## Building and running
 - Developed using:
@@ -95,7 +124,7 @@ They were not specified or not clearly defined in the specification of the inter
   - Then use the command `./Interpreter.exe code.txt` to run the file you created.
     - The program takes exactly one argument, which is the absolute or relative path to the file to interpret.
     - The interpreter will print errors if it finds any. The first error printed is the first error found. Any errors printed after that may be caused by the first error detected.
-    - If no errors are detected the code is run and any errors during execution halt the program execution. Assert WILL NOT halt the program execution.
+    - If no errors are detected the code is run and any errors during execution halt the program execution. Assert WILL halt the program execution.
 
 ## Token patterns
 - Number, regex: `%d+`
@@ -108,7 +137,7 @@ They were not specified or not clearly defined in the specification of the inter
   ```
 - Identifier, regex: `(\a|_)(\a|\d|_)*` any identifier that matches a list of keywords is converted to a keyword
 
-Any other tokens are matched as the token themselves - these are NOT regex patterns or regular definitions - it makes little sense describing them with regex or similar. They are the following:
+Any other tokens are matched as the token themselves - these are NOT regex patterns or regular definitions - it makes little sense describing them with regex or regular definitions due to their length and nature of being exact match. They are the following:
 - `:=`
 - `..`
 - `(`
@@ -125,7 +154,7 @@ Any other tokens are matched as the token themselves - these are NOT regex patte
 - `*`
 
 
-Additionally any whitespace is skipped.
+Additionally any whitespace is skipped. The whitespace characters are more specifically defined in [https://msdn.microsoft.com/en-us/library/t809ektx(v=vs.110).aspx](https://msdn.microsoft.com/en-us/library/t809ektx(v=vs.110).aspx).
 Other tokens are handled as unexpected tokens.
 
 ## LL1 grammar
@@ -151,7 +180,7 @@ Verification results:
 - [View LL1 parsing table](http://smlweb.cpsc.ucalgary.ca/ll1-table.php?grammar=STMTS+-%3E+STMT+%3B+STMTSTAIL.%0ASTMTSTAIL+-%3E+STMTS+%7C+.%0ASTMT+-%3E+var+IDENT+%3A+TYPE+VARTAIL+%7C+IDENT+%3Aq+EXPR+%7C+for+IDENT+in+EXPR+dd+EXPR+do+STMTS+end+for+%7C+read+IDENT+%7C+print+EXPR+%7C+assert+%28+EXPR+%29.%0AVARTAIL+-%3E+%3Aq+EXPR+%7C+.%0AEXPR+-%3E+OPND+EXPRTAIL+%7C+UNARYOP+OPND.%0AEXPRTAIL+-%3E+OP+OPND+%7C+.%0AOPND+-%3E+INT+%7C+STRING+%7C+IDENT+%7C+%28+EXPR+%29.%0ATYPE+-%3E+int+%7C+string+%7C+bool.%0AINT+-%3E+intliteral.%0ASTRING+-%3E+stringliteral.%0AIDENT+-%3E+identifier.%0AUNARYOP+-%3E+unaryop.%0AOP+-%3E+op.&substs=)
 
 Grammar verified at [http://smlweb.cpsc.ucalgary.ca/start.html](http://smlweb.cpsc.ucalgary.ca/start.html).
-Grammar converted to suitable form for verification:
+Grammar converted to suitable form for the verification tool:
 ```
 STMTS -> STMT ; STMTSTAIL.
 STMTSTAIL -> STMTS | .
@@ -170,10 +199,12 @@ OP -> op.
 
 ## AST representation
 
-All of the nodes contain a Lexeme and the type of the node in addition to data represented in the diagrams below.
-No value can be null unless otherwise specified. All names starting with uppercase name are `ASTNode` child classes. Any names starting with lowercase letter are some common type such as string, or int. Many nodes have alternative node types that they can contain, they are represented as a single node where each node type is separated by an `or`. Any note, such as `can be null`, is marked in parenthesis below the node's possible types. The diagrams are read from top down and they attempt to represent tree structures where the root node is at the top. Any higher node will own all the nodes below it that are connected to it. `Boolean` is a special type which cannot appear in the AST built by the parser because nothing in the grammar can directly define a boolean value, it will however be generated during runtime after evaluating expressions that evaluate to a boolean value. The root node of an AST is a `Statements`, however other nodes are possible to be used as the root with visitors, for example `ExpressionPrinter` assumes the root node to be `Expression` or any node that `Expression` can contain.
+All of the nodes contain a `Lexeme` and the type of the node in addition to data represented in the diagrams below.
+No value can be null unless otherwise specified. All names starting with uppercase name are `ASTNode` child classes. Any names starting with lowercase letter are some common type such as string, or int. Many nodes have alternative node types that they can contain, they are represented as a single node where each node type is separated by an `or`. Any note, such as `can be null`, is marked in parenthesis below the node's possible types. The diagrams are read from top down and they attempt to represent tree structures where the root node is at the top. Any higher node will own all the nodes below it that are connected to it with a line. `Boolean` is a special type which cannot appear in the AST built by the parser because nothing in the grammar can directly define a boolean value, it will however be generated during runtime after evaluating expressions that evaluate to a boolean value.
 
-![Diagram of all of the ASTNodes and their contained values](https://github.com/Rochet2/compilers/blob/master/documents/ASTNodes.svg)
+The diagram below shows all node classes and what they can contain. AST is built by combining these nodes. The root node of an AST is a `Statements` node, however other nodes are possible to be used as the root with visitors, for example `ExpressionPrinter` assumes the root node to be `Expression` or any node that `Expression` can contain.
+
+![Diagram of all of the ASTNodes and their contained values](documents/ASTNodes.svg)
 
 
 Below you can see the AST of the following small program:
@@ -184,7 +215,7 @@ for x in 1..(2+x) do // from 1 to 3
 end for;
 ```
 
-![Example AST tree of a small program](https://github.com/Rochet2/compilers/blob/master/documents/ExampleAST.svg)
+![Example AST tree of a small program](documents/ExampleAST.svg)
 
 ## Error handling
 Error handling is done by exceptions. Any error that occurs throws an exception with any relevant information such as an error message and current position or node. The caller of the function or some higher level will catch the exception and handle it by aborting or alternatively skipping to the next line or statement to continue reporting errors. Any error detected will set `errored` flag to true for that specific object that experienced the error.
@@ -229,20 +260,8 @@ Example programs:
 assert 0 token type does not match expected 0;
 assert ) token value does not match expected (;
 ; // empty statement
-var X : int := 4 + (6 * 2; // missing tokens
-var X : int := 4 + (6 *; // missing tokens
-var X : int := 4 + (6; // missing tokens
-var X : int := 4 + (; // missing tokens
-var X : int := 4 +; // missing tokens
-var X : int :=; // missing tokens
 var X :; // missing tokens
-var X; // missing tokens
-var; // missing tokens
 123 // tokens after program end
-```
-```
-// missing tokens and program ends
-var X : int := 4 + (6 * 2
 ```
 
 #### Analyser
@@ -267,15 +286,15 @@ statements dont return null (untestable)
 print value not printable (untestable)
 binary operator unknown for given operands
 unary operator unknown for given operand
-variable is immutable due to a for loop (cannot assign, read)
+variable is immutable due to a forloop (cannot assign, read, use in nested forloop)
 ```
 
 Example programs:
 ```
 x := 5; // x not defined
 var x : int; x := "string"; // wrong type
-for x in (1=1)..2 do print x; end for; // begin not number
-for x in 1..("str") do print x; end for; // end not number
+var g1 : int; for g1 in (1=1)..2 do print g1; end for; // begin not number
+var g2 : int; for g2 in 1..("str") do print g2; end for; // end not number
 for y in 1..2 do print y; end for; // loop variable not defined
 var y : string; for y in 1..2 do print y; end for; // loop variable not a number
 var z : bool; var z : bool; // duplicate define
@@ -287,10 +306,10 @@ var e : bool; read e; // e not readable type (bool)
 assert (5); // assert condition not boolean
 print 1&2; // invalid integer operator
 print 1&"a"; // invalid binary operator
-print 1="a"; // invalid binary operator
-print &(1=1); // invalid unary operator
-var x1 : int; for x1 in 1..2 do x1 := 10; end for; // variable is immutable due to a for loop (assign)
-var x2 : int; for x2 in 1..2 do read x2; end for; // variable is immutable due to a for loop (read)
+print &1; // invalid unary operator
+var x1 : int; for x1 in 1..2 do x1 := 10; end for; // variable is immutable due to a forloop (assign)
+var x2 : int; for x2 in 1..2 do read x2; end for; // variable is immutable due to a forloop (read)
+var i : int; for i in 1..2 do for i in 1..2 do var x3 : int; end for; end for; // variable is immutable due to a forloop (nested forloop)
 ```
 
 #### Interpreter

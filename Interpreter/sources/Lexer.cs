@@ -276,6 +276,7 @@ namespace Interpreter
                         --nestedComments;
                         continue;
                     }
+                    s += input.PeekCharacter();
                 } while (input.Next());
             }
             throw new LexerException(string.Format("unexpected end of blockcomment starting at {0}", pos.ToString()), input.GetPosition());
@@ -385,12 +386,13 @@ namespace Interpreter
                 {
                     // skip
                     input.Next();
+                    return LexNext();
                 }
                 else
                 {
                     InputBuffer.Position pos = input.GetPosition();
                     input.Next();
-                    throw new LexerException(string.Format("unrecognized token {0}{1}", current, next), pos);
+                    throw new LexerException(string.Format("unrecognized token beginning with {0} followed by {1}", current, next), pos);
                 }
             }
             catch (LexerException e)

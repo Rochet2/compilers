@@ -26,7 +26,7 @@ namespace Interpreter
          * Utility function to convert a string to an InputBuffer
          * where bufferSize is the size of the buffer.
          */
-        public static InputBuffer ToInputBuffer(string str, int bufferSize)
+        public static InputBuffer ToInputBuffer(string str, int bufferSize = 2)
         {
             return new InputBuffer(ToStream(str), bufferSize);
         }
@@ -75,7 +75,6 @@ namespace Interpreter
                 buffer[i - 1] = buffer[i];
             buffer[buffer.Length - 1] = stream.ReadByte();
 
-            ++position.absolutePos;
             ++position.column;
             if (previous == '\n')
             {
@@ -119,7 +118,6 @@ namespace Interpreter
          */
         public class Position
         {
-            public int absolutePos = 0;
             public int line = 1;
             public int column = 1;
 

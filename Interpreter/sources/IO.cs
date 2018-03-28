@@ -58,51 +58,14 @@ namespace Interpreter
 
         public override int Read()
         {
-            if (input.Length < currentInputPosition)
+            if (currentInputPosition >= input.Length)
                 return -1;
+            output += input[currentInputPosition];
             return input[currentInputPosition++];
         }
 
         public string input;
         public string output = "";
         private int currentInputPosition = 0;
-    }
-
-    /*
-     * IO used for testing.
-     * Can be initialized with multiple predefined input strings,
-     * which are considered to be separate lines.
-     * Exposes output variable, which is a list of strings written to output.
-     */
-    public class TestIO : IO
-    {
-        public TestIO()
-        {
-            input = "";
-        }
-
-        public TestIO(params string[] a)
-        {
-            input = string.Join("\n", a);
-        }
-
-        public override void Write(string str)
-        {
-            if (output.Count <= 0)
-                output.Add(str);
-            else
-                output[output.Count - 1] += str;
-        }
-
-        public override int Read()
-        {
-            if (input.Length < currentInputPosition)
-                return -1;
-            return input[currentInputPosition++];
-        }
-
-        private int currentInputPosition = 0;
-        private string input;
-        public List<string> output { get; private set; } = new List<string> { "" };
     }
 }

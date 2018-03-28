@@ -1,6 +1,0 @@
-// Lexer errors:
-unrecognized token #;
-print 99999999999999999999999; // too high constant
-"endless string
-/* endless block comment
-

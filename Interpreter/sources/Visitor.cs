@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Interpreter
 {
     /*
-     * An abstract Visitor class for walking an AST tree.
+     * An abstract visitor class for walking an AST tree.
      * All visitors inherit this class.
      * The class is equipped with methods for walking, checking types and
      * asserting.
@@ -25,7 +25,7 @@ namespace Interpreter
         /*
          * Visits an ASTNode by calling the visitor function of it's type
          */
-        public ASTNode Visit(ASTNode node)
+        protected ASTNode Visit(ASTNode node)
         {
             if (node == null)
                 throw new VisitorException("trying to visit a null node");
@@ -38,7 +38,7 @@ namespace Interpreter
          * The exception contains an error message and attaches errorNode or
          * if not given then convertedNode as the source of the error.
          */
-        public T As<T>(ASTNode convertedNode, ASTNodeType expectedtype, ASTNode errorNode = null) where T : ASTNode
+        protected T As<T>(ASTNode convertedNode, ASTNodeType expectedtype, ASTNode errorNode = null) where T : ASTNode
         {
             var converted = convertedNode as T;
             if (converted != null)
@@ -52,7 +52,7 @@ namespace Interpreter
          * The exception contains an error message and attaches errorNode or
          * if not given then node as the source of the error.
          */
-        public void Expect<T>(ASTNode node, ASTNodeType expectedtype, ASTNode errorNode = null) where T : ASTNode
+        protected void Expect<T>(ASTNode node, ASTNodeType expectedtype, ASTNode errorNode = null) where T : ASTNode
         {
             var converted = node as T;
             if (converted != null)
@@ -66,7 +66,7 @@ namespace Interpreter
          * The exception contains an error message and attaches errorNode or
          * if not given then node as the source of the error.
          */
-        public void ExpectNull(ASTNode node, ASTNode errorNode = null)
+        protected void ExpectNull(ASTNode node, ASTNode errorNode = null)
         {
             if (node == null)
                 return;
@@ -79,7 +79,7 @@ namespace Interpreter
          * The exception contains an error message and attaches errorNode or
          * if not given then node as the source of the error.
          */
-        public ASTNode ExpectNotNull(ASTNode node, ASTNode errorNode = null)
+        protected ASTNode ExpectNotNull(ASTNode node, ASTNode errorNode = null)
         {
             if (node != null)
                 return node;
@@ -90,7 +90,7 @@ namespace Interpreter
          * Returns true if the node is of the given type T.
          * Returns false otherwise.
          */
-        public bool Is<T>(ASTNode node) where T : ASTNode
+        protected bool Is<T>(ASTNode node) where T : ASTNode
         {
             var converted = node as T;
             if (converted != null)
@@ -103,7 +103,7 @@ namespace Interpreter
          * If variable not found throws a VisitorException with an
          * error message and errorNode or ident as source of the error.
          */
-        public Variable GetVariable(Identifier identifier, ASTNode errorNode = null)
+        protected Variable GetVariable(IdentifierNode identifier, ASTNode errorNode = null)
         {
             if (!variables.ContainsKey(identifier.name))
                 throw new VisitorException(string.Format("using undefined identifier {0}", identifier.name), errorNode ?? identifier);
@@ -116,7 +116,7 @@ namespace Interpreter
          * If variable not found throws a VisitorException with an
          * error message and errorNode or ident as source of the error.
          */
-        public Variable ExpectMutable(Identifier identifier, ASTNode errorNode = null)
+        protected Variable ExpectMutable(IdentifierNode identifier, ASTNode errorNode = null)
         {
             var variable = GetVariable(identifier, errorNode);
             if (!variable.immutable)
@@ -129,7 +129,7 @@ namespace Interpreter
          * Sets error indicator to true,
          * prints the error message.
          */
-        public void PrintError(VisitorException e)
+        protected void PrintError(VisitorException e)
         {
             errored = true;
             string errorMessage = string.Format("{0} error", name);
@@ -184,7 +184,7 @@ namespace Interpreter
          * A Variable class that represents a variable value.
          * Can define if the variable value is immutable.
          */
-        public class Variable
+        protected class Variable
         {
             public Variable(ASTVariableNode variable, bool immutable = false)
             {
@@ -200,7 +200,7 @@ namespace Interpreter
          * An exception thrown by the Visitor on unexpected errors.
          * Contains the error message and the node that caused the error.
          */
-        public class VisitorException : Exception
+        protected class VisitorException : Exception
         {
             public VisitorException(string message, ASTNode node = null) : base(message)
             {
@@ -211,7 +211,7 @@ namespace Interpreter
         }
 
         private string name; // Visitor name
-        public delegate ASTNode VisitorFunction(ASTNode ast); // type of the Visit functions
+        protected delegate ASTNode VisitorFunction(ASTNode ast); // type of the Visit functions
         public bool errored { get; protected set; } = false;
         protected ASTNode ast;
         protected Dictionary<string /*identifier*/, Variable> variables = new Dictionary<string, Variable>();

@@ -2,6 +2,7 @@
 {
     /*
      * A visitor class for printing the tokens of given expression with given IO.
+     * Expects the given AST to consist only of ExpressionNode or any possible child node to it.
      */
     public class ExpressionPrinter : Visitor
     {
@@ -26,18 +27,18 @@
             this.visitorFunctions.Add(ASTNodeType.BOOLEAN, PrintToken);
             this.visitorFunctions.Add(ASTNodeType.UNARYOPERATOR, x =>
             {
-                var unaryOperator = As<UnaryOperator>(x, ASTNodeType.UNARYOPERATOR);
+                var unaryOperator = As<UnaryOperatorNode>(x, ASTNodeType.UNARYOPERATOR);
                 PrintToken(unaryOperator);
                 PrintToken(unaryOperator.operand);
                 return null;
             });
             this.visitorFunctions.Add(ASTNodeType.EXPRESSION, x =>
             {
-                var expression = As<Expression>(x, ASTNodeType.EXPRESSION);
+                var expression = As<ExpressionNode>(x, ASTNodeType.EXPRESSION);
                 if (expression.binaryOperator == null)
                     return Visit(expression.leftOperand); // was not binary operation
                 // is a binary opration
-                var binaryOperator = As<BinaryOperator>(expression.binaryOperator, ASTNodeType.BINARYOPERATOR);
+                var binaryOperator = As<BinaryOperatorNode>(expression.binaryOperator, ASTNodeType.BINARYOPERATOR);
                 io.Write("(");
                 Visit(expression.leftOperand);
                 PrintToken(binaryOperator);

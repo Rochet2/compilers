@@ -22,15 +22,15 @@ namespace Interpreter
             this.visitorFunctions.Add(ASTNodeType.TYPENAME, x => x);
             this.visitorFunctions.Add(ASTNodeType.UNARYOPERATOR, x =>
             {
-                var unaryOperation = As<UnaryOperator>(x, ASTNodeType.UNARYOPERATOR);
+                var unaryOperation = As<UnaryOperatorNode>(x, ASTNodeType.UNARYOPERATOR);
                 var operand = ExpectNotNull(Visit(unaryOperation.operand), unaryOperation.operand);
                 // Make sure the operand is boolean before checking boolean operators
-                if (Is<Boolean>(operand))
+                if (Is<BooleanNode>(operand))
                 {
                     switch (unaryOperation.unaryOperator)
                     {
                         case "!":
-                            return new Boolean(!As<Boolean>(operand, ASTNodeType.BOOLEAN, unaryOperation.operand).value);
+                            return new BooleanNode(!As<BooleanNode>(operand, ASTNodeType.BOOLEAN, unaryOperation.operand).value);
                     }
                     throw new VisitorException(string.Format("unrecognized boolean unary operator {0}", unaryOperation.unaryOperator), unaryOperation);
                 }
@@ -38,65 +38,65 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.EXPRESSION, x =>
             {
-                var expression = As<Expression>(x, ASTNodeType.EXPRESSION);
+                var expression = As<ExpressionNode>(x, ASTNodeType.EXPRESSION);
                 if (expression.binaryOperator == null)
                     return ExpectNotNull(Visit(expression.leftOperand), expression.leftOperand); // is not a binary operation
                 // is a binary operation
                 // fetch all values
-                var binaryOperation = As<BinaryOperator>(expression.binaryOperator, ASTNodeType.BINARYOPERATOR);
+                var binaryOperation = As<BinaryOperatorNode>(expression.binaryOperator, ASTNodeType.BINARYOPERATOR);
                 var operandLeft = ExpectNotNull(Visit(expression.leftOperand), expression.leftOperand);
                 var operandRight = ExpectNotNull(Visit(binaryOperation.rightOperand), binaryOperation.rightOperand);
                 // Do number operations
-                if (Is<Number>(operandLeft) && Is<Number>(operandRight))
+                if (Is<NumberNode>(operandLeft) && Is<NumberNode>(operandRight))
                 {
-                    var l = As<Number>(operandLeft, ASTNodeType.NUMBER, expression.leftOperand);
-                    var r = As<Number>(operandRight, ASTNodeType.NUMBER, binaryOperation.rightOperand);
+                    var l = As<NumberNode>(operandLeft, ASTNodeType.NUMBER, expression.leftOperand);
+                    var r = As<NumberNode>(operandRight, ASTNodeType.NUMBER, binaryOperation.rightOperand);
                     switch (binaryOperation.binaryOperator)
                     {
                         case "+":
-                            return new Number(l.value + r.value);
+                            return new NumberNode(l.value + r.value);
                         case "-":
-                            return new Number(l.value - r.value);
+                            return new NumberNode(l.value - r.value);
                         case "*":
-                            return new Number(l.value * r.value);
+                            return new NumberNode(l.value * r.value);
                         case "/":
-                            return new Number(l.value / r.value);
+                            return new NumberNode(l.value / r.value);
                         case "=":
-                            return new Boolean(l.value == r.value);
+                            return new BooleanNode(l.value == r.value);
                         case "<":
-                            return new Boolean(l.value < r.value);
+                            return new BooleanNode(l.value < r.value);
                     }
                     throw new VisitorException(string.Format("unknown integer binary operator {0}", binaryOperation.binaryOperator), binaryOperation);
                 }
                 // do string operations
-                if (Is<String>(operandLeft) && Is<String>(operandRight))
+                if (Is<StringNode>(operandLeft) && Is<StringNode>(operandRight))
                 {
-                    var l = As<String>(operandLeft, ASTNodeType.STRING, expression.leftOperand);
-                    var r = As<String>(operandRight, ASTNodeType.STRING, binaryOperation.rightOperand);
+                    var l = As<StringNode>(operandLeft, ASTNodeType.STRING, expression.leftOperand);
+                    var r = As<StringNode>(operandRight, ASTNodeType.STRING, binaryOperation.rightOperand);
                     switch (binaryOperation.binaryOperator)
                     {
                         case "+":
-                            return new String(l.value + r.value);
+                            return new StringNode(l.value + r.value);
                         case "=":
-                            return new Boolean(l.value == r.value);
+                            return new BooleanNode(l.value == r.value);
                         case "<":
-                            return new Boolean(string.Compare(l.value, r.value) < 0);
+                            return new BooleanNode(string.Compare(l.value, r.value) < 0);
                     }
                     throw new VisitorException(string.Format("unknown string binary operator {0}", binaryOperation.binaryOperator), binaryOperation);
                 }
                 // do boolean operations
-                if (Is<Boolean>(operandLeft) && Is<Boolean>(operandRight))
+                if (Is<BooleanNode>(operandLeft) && Is<BooleanNode>(operandRight))
                 {
-                    var l = As<Boolean>(operandLeft, ASTNodeType.BOOLEAN, expression.leftOperand);
-                    var r = As<Boolean>(operandRight, ASTNodeType.BOOLEAN, binaryOperation.rightOperand);
+                    var l = As<BooleanNode>(operandLeft, ASTNodeType.BOOLEAN, expression.leftOperand);
+                    var r = As<BooleanNode>(operandRight, ASTNodeType.BOOLEAN, binaryOperation.rightOperand);
                     switch (binaryOperation.binaryOperator)
                     {
                         case "&":
-                            return new Boolean(l.value && r.value);
+                            return new BooleanNode(l.value && r.value);
                         case "=":
-                            return new Boolean(l.value == r.value);
+                            return new BooleanNode(l.value == r.value);
                         case "<":
-                            return new Boolean(!l.value && r.value);
+                            return new BooleanNode(!l.value && r.value);
                     }
                     throw new VisitorException(string.Format("unknown boolean binary operator {0}", binaryOperation.binaryOperator), binaryOperation);
                 }
@@ -104,14 +104,14 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.PRINT, x =>
             {
-                var printNode = As<Print>(x, ASTNodeType.PRINT);
+                var printNode = As<PrintNode>(x, ASTNodeType.PRINT);
                 var printed = As<ASTVariableNode>(Visit(printNode.printedValue), ASTNodeType.VARIABLE, printNode.printedValue);
                 io.Write("{0}", printed.Value());
                 return null;
             });
             this.visitorFunctions.Add(ASTNodeType.STATEMENT, x =>
             {
-                var statements = As<Statements>(x, ASTNodeType.STATEMENT);
+                var statements = As<StatementsNode>(x, ASTNodeType.STATEMENT);
                 ExpectNull(Visit(statements.statement), statements.statement);
                 if (statements.statementtail != null) // statement has another statement after it
                     ExpectNull(Visit(statements.statementtail), statements.statementtail);
@@ -119,8 +119,8 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.ASSERT, x =>
             {
-                var assertNode = As<Assert>(x, ASTNodeType.ASSERT);
-                var condition = As<Boolean>(Visit(assertNode.condition), ASTNodeType.BOOLEAN, assertNode.condition);
+                var assertNode = As<AssertNode>(x, ASTNodeType.ASSERT);
+                var condition = As<BooleanNode>(Visit(assertNode.condition), ASTNodeType.BOOLEAN, assertNode.condition);
                 if (!condition.value)
                 {
                     // assertion failed.
@@ -143,8 +143,8 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.READ, x =>
             {
-                var readNode = As<Read>(x, ASTNodeType.READ);
-                var identifier = As<Identifier>(readNode.identifierToRead, ASTNodeType.IDENTIFIER);
+                var readNode = As<ReadNode>(x, ASTNodeType.READ);
+                var identifier = As<IdentifierNode>(readNode.identifierToRead, ASTNodeType.IDENTIFIER);
                 var variable = ExpectMutable(identifier, readNode.identifierToRead);
                 var variableType = variable.value.type;
                 switch (variableType)
@@ -156,7 +156,7 @@ namespace Interpreter
                             try
                             {
 
-                                variables[identifier.name] = new Variable(new Number(ReadInput()));
+                                variables[identifier.name] = new Variable(new NumberNode(ReadInput()));
                                 break;
                             }
                             catch (System.FormatException /*e*/)
@@ -168,7 +168,7 @@ namespace Interpreter
                         break;
                     case ASTNodeType.STRING:
                         // read a string from input
-                        variables[identifier.name] = new Variable(new String(ReadInput()));
+                        variables[identifier.name] = new Variable(new StringNode(ReadInput()));
                         break;
                     default:
                         throw new VisitorException(string.Format("variable {0} has unsupported type {1} to read from input", identifier.name, variableType), readNode.identifierToRead);
@@ -177,14 +177,14 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.IDENTIFIER, x =>
             {
-                var identifier = As<Identifier>(x, ASTNodeType.IDENTIFIER);
+                var identifier = As<IdentifierNode>(x, ASTNodeType.IDENTIFIER);
                 return GetVariable(identifier).value;
             });
             this.visitorFunctions.Add(ASTNodeType.DECLARATION, x =>
             {
-                var declarationNode = As<Declaration>(x, ASTNodeType.DECLARATION);
-                var typeNameNode = As<TypeName>(declarationNode.identifierType, ASTNodeType.TYPENAME);
-                var identifier = As<Identifier>(declarationNode.identifier, ASTNodeType.IDENTIFIER);
+                var declarationNode = As<DeclarationNode>(x, ASTNodeType.DECLARATION);
+                var typeNameNode = As<TypeNameNode>(declarationNode.identifierType, ASTNodeType.TYPENAME);
+                var identifier = As<IdentifierNode>(declarationNode.identifier, ASTNodeType.IDENTIFIER);
 
                 // get the real type from string type
                 // error on unknown type
@@ -214,13 +214,13 @@ namespace Interpreter
                     switch (typeNameNode.typeName)
                     {
                         case "int":
-		                    variables[identifier.name] = new Variable(new Number(0));
+		                    variables[identifier.name] = new Variable(new NumberNode(0));
                             break;
                         case "string":
-                            variables[identifier.name] = new Variable(new String(""));
+                            variables[identifier.name] = new Variable(new StringNode(""));
                             break;
                         case "bool":
-                            variables[identifier.name] = new Variable(new Boolean(false));
+                            variables[identifier.name] = new Variable(new BooleanNode(false));
                             break;
                     }
                 }
@@ -236,16 +236,16 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.FORLOOP, x =>
             {
-                var forLoopNode = As<ForLoop>(x, ASTNodeType.FORLOOP);
+                var forLoopNode = As<ForLoopNode>(x, ASTNodeType.FORLOOP);
 
                 // get control variable and make sure it is correct type and is mutable
-                var identifier = As<Identifier>(forLoopNode.loopVariableIdentifier, ASTNodeType.IDENTIFIER);
+                var identifier = As<IdentifierNode>(forLoopNode.loopVariableIdentifier, ASTNodeType.IDENTIFIER);
                 var controlVariable = ExpectMutable(identifier, forLoopNode.loopVariableIdentifier);
-                Expect<Number>(controlVariable.value, ASTNodeType.NUMBER, forLoopNode.loopVariableIdentifier);
+                Expect<NumberNode>(controlVariable.value, ASTNodeType.NUMBER, forLoopNode.loopVariableIdentifier);
 
                 // make sure begin and end are numbers
-                var begin = As<Number>(Visit(forLoopNode.beginValue), ASTNodeType.NUMBER, forLoopNode.beginValue);
-                var end = As<Number>(Visit(forLoopNode.endValue), ASTNodeType.NUMBER, forLoopNode.endValue);
+                var begin = As<NumberNode>(Visit(forLoopNode.beginValue), ASTNodeType.NUMBER, forLoopNode.beginValue);
+                var end = As<NumberNode>(Visit(forLoopNode.endValue), ASTNodeType.NUMBER, forLoopNode.endValue);
 
                 // set control variable immutable
                 controlVariable.immutable = true;
@@ -255,14 +255,14 @@ namespace Interpreter
                 for (; i <= end.value; ++i)
                 {
                     // update the control variable
-                    variables[identifier.name] = new Variable(new Number(i, identifier.lexeme), true);
+                    variables[identifier.name] = new Variable(new NumberNode(i, identifier.lexeme), true);
                     // execute statements
                     ExpectNull(Visit(forLoopNode.statements), forLoopNode.statements);
                 }
 
                 // A small quirk that seemed to be a part of an example program
                 // the quirk is that after for loop ends, the control variable is one over the end
-                variables[identifier.name] = new Variable(new Number(i, identifier.lexeme));
+                variables[identifier.name] = new Variable(new NumberNode(i, identifier.lexeme));
 
                 // make control variable mutable again
                 controlVariable.immutable = false;
@@ -270,9 +270,9 @@ namespace Interpreter
             });
             this.visitorFunctions.Add(ASTNodeType.ASSIGNMENT, x =>
             {
-                var assignmentNode = As<Assignment>(x, ASTNodeType.ASSIGNMENT);
+                var assignmentNode = As<AssignmentNode>(x, ASTNodeType.ASSIGNMENT);
                 // get variable and assigned value
-                var identifier = As<Identifier>(assignmentNode.identifier, ASTNodeType.IDENTIFIER);
+                var identifier = As<IdentifierNode>(assignmentNode.identifier, ASTNodeType.IDENTIFIER);
                 var variable = ExpectMutable(identifier, assignmentNode.identifier);
                 var value = Visit(assignmentNode.value);
                 // make sure value matches variable type

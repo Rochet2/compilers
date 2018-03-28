@@ -61,9 +61,9 @@ namespace Interpreter
      * Below are the AST node classes for each possible ASTNodeType.
      */
 
-    public class Expression : ASTNode
+    public class ExpressionNode : ASTNode
     {
-        public Expression() :
+        public ExpressionNode() :
             base(ASTNodeType.EXPRESSION)
         {
         }
@@ -72,9 +72,9 @@ namespace Interpreter
         public ASTNode binaryOperator;
     }
 
-    public class BinaryOperator : ASTNode
+    public class BinaryOperatorNode : ASTNode
     {
-        public BinaryOperator() :
+        public BinaryOperatorNode() :
             base(ASTNodeType.BINARYOPERATOR)
         {
         }
@@ -83,28 +83,28 @@ namespace Interpreter
         public ASTNode rightOperand;
     }
 
-    public class Number : ASTVariableNode
+    public class NumberNode : ASTVariableNode
     {
-        public Number(string value) :
+        public NumberNode(string value) :
             base(ASTNodeType.NUMBER)
         {
             this.value = int.Parse(value);
         }
 
-        public Number(int value) :
+        public NumberNode(int value) :
             base(ASTNodeType.NUMBER)
         {
             this.value = value;
         }
 
-        public Number(string value, Lexeme lexeme) :
+        public NumberNode(string value, Lexeme lexeme) :
             base(ASTNodeType.NUMBER)
         {
             this.value = int.Parse(value);
             this.lexeme = lexeme;
         }
 
-        public Number(int value, Lexeme lexeme) :
+        public NumberNode(int value, Lexeme lexeme) :
             base(ASTNodeType.NUMBER)
         {
             this.value = value;
@@ -119,9 +119,9 @@ namespace Interpreter
         public int value;
     }
 
-    public class String : ASTVariableNode
+    public class StringNode : ASTVariableNode
     {
-        public String(string value) :
+        public StringNode(string value) :
             base(ASTNodeType.STRING)
         {
             this.value = value;
@@ -135,9 +135,9 @@ namespace Interpreter
         public string value;
     }
 
-    public class Boolean : ASTVariableNode
+    public class BooleanNode : ASTVariableNode
     {
-        public Boolean(bool value) :
+        public BooleanNode(bool value) :
             base(ASTNodeType.BOOLEAN)
         {
             this.value = value;
@@ -151,9 +151,9 @@ namespace Interpreter
         public bool value;
     }
 
-    public class Identifier : ASTNode
+    public class IdentifierNode : ASTNode
     {
-        public Identifier(string name) :
+        public IdentifierNode(string name) :
             base(ASTNodeType.IDENTIFIER)
         {
             this.name = name;
@@ -162,9 +162,9 @@ namespace Interpreter
         public string name;
     }
 
-    public class Print : ASTNode
+    public class PrintNode : ASTNode
     {
-        public Print() :
+        public PrintNode() :
             base(ASTNodeType.PRINT)
         {
         }
@@ -172,9 +172,9 @@ namespace Interpreter
         public ASTNode printedValue;
     }
 
-    public class Read : ASTNode
+    public class ReadNode : ASTNode
     {
-        public Read() :
+        public ReadNode() :
             base(ASTNodeType.READ)
         {
         }
@@ -182,9 +182,9 @@ namespace Interpreter
         public ASTNode identifierToRead;
     }
 
-    public class Assert : ASTNode
+    public class AssertNode : ASTNode
     {
-        public Assert() :
+        public AssertNode() :
             base(ASTNodeType.ASSERT)
         {
         }
@@ -192,9 +192,9 @@ namespace Interpreter
         public ASTNode condition;
     }
 
-    public class UnaryOperator : ASTNode
+    public class UnaryOperatorNode : ASTNode
     {
-        public UnaryOperator() :
+        public UnaryOperatorNode() :
             base(ASTNodeType.UNARYOPERATOR)
         {
         }
@@ -203,9 +203,9 @@ namespace Interpreter
         public ASTNode operand;
     }
 
-    public class TypeName : ASTNode
+    public class TypeNameNode : ASTNode
     {
-        public TypeName(string typeName) :
+        public TypeNameNode(string typeName) :
             base(ASTNodeType.TYPENAME)
         {
             this.typeName = typeName;
@@ -214,9 +214,9 @@ namespace Interpreter
         public string typeName;
     }
 
-    public class Statements : ASTNode
+    public class StatementsNode : ASTNode
     {
-        public Statements() :
+        public StatementsNode() :
             base(ASTNodeType.STATEMENT)
         {
         }
@@ -225,9 +225,9 @@ namespace Interpreter
         public ASTNode statementtail;
     }
 
-    public class Declaration : ASTNode
+    public class DeclarationNode : ASTNode
     {
-        public Declaration() :
+        public DeclarationNode() :
             base(ASTNodeType.DECLARATION)
         {
         }
@@ -237,9 +237,9 @@ namespace Interpreter
         public ASTNode identifierValue = null;
     }
 
-    public class Assignment : ASTNode
+    public class AssignmentNode : ASTNode
     {
-        public Assignment() :
+        public AssignmentNode() :
             base(ASTNodeType.ASSIGNMENT)
         {
         }
@@ -248,9 +248,9 @@ namespace Interpreter
         public ASTNode value;
     }
 
-    public class ForLoop : ASTNode
+    public class ForLoopNode : ASTNode
     {
-        public ForLoop() :
+        public ForLoopNode() :
             base(ASTNodeType.FORLOOP)
         {
         }

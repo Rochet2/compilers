@@ -97,7 +97,7 @@ namespace Interpreter
         ASTNode NUM()
         {
             var lexeme = Consume(TokenType.NUMBER);
-            var node = new Number(lexeme.token);
+            var node = new NumberNode(lexeme.token);
             node.lexeme = lexeme;
             return node;
         }
@@ -105,15 +105,15 @@ namespace Interpreter
         ASTNode STR()
         {
             var lexeme = Consume(TokenType.STRING);
-            var node = new String(lexeme.token);
+            var node = new StringNode(lexeme.token);
             node.lexeme = lexeme;
             return node;
         }
 
-        Identifier IDENT()
+        IdentifierNode IDENT()
         {
             var lexeme = Consume(TokenType.IDENTIFIER);
-            var node = new Identifier(lexeme.token);
+            var node = new IdentifierNode(lexeme.token);
             node.lexeme = lexeme;
             return node;
         }
@@ -121,14 +121,14 @@ namespace Interpreter
         ASTNode TYPE()
         {
             var lexeme = Consume(TokenType.KEYWORD);
-            var node = new TypeName(lexeme.token);
+            var node = new TypeNameNode(lexeme.token);
             node.lexeme = lexeme;
             return node;
         }
 
         ASTNode UNARY()
         {
-            var node = new UnaryOperator();
+            var node = new UnaryOperatorNode();
             node.lexeme = Consume(TokenType.OPERATOR);
             node.unaryOperator = node.lexeme.token;
             node.operand = OPND();
@@ -137,7 +137,7 @@ namespace Interpreter
 
         ASTNode BINOP()
         {
-            var node = new BinaryOperator();
+            var node = new BinaryOperatorNode();
             node.lexeme = Consume(TokenType.OPERATOR);
             node.binaryOperator = node.lexeme.token;
             node.rightOperand = OPND();
@@ -178,7 +178,7 @@ namespace Interpreter
         {
             if (LexemeContains(TokenType.OPERATOR)) // unary
                 return UNARY();
-            var node = new Expression(); // expression
+            var node = new ExpressionNode(); // expression
             node.lexeme = currentLexeme;
             node.leftOperand = OPND();
             node.binaryOperator = EXPRTAIL(); // fill binary expression if can
@@ -187,7 +187,7 @@ namespace Interpreter
 
         ASTNode PRINT()
         {
-            var node = new Print();
+            var node = new PrintNode();
             node.lexeme = Consume("print", TokenType.KEYWORD);
             node.printedValue = EXPR();
             return node;
@@ -195,7 +195,7 @@ namespace Interpreter
 
         ASTNode ASSERT()
         {
-            var node = new Assert();
+            var node = new AssertNode();
             node.lexeme = Consume("assert", TokenType.KEYWORD);
             Consume("(", TokenType.SEPARATOR);
             node.condition = EXPR();
@@ -215,7 +215,7 @@ namespace Interpreter
 
         ASTNode VAR()
         {
-            var node = new Declaration();
+            var node = new DeclarationNode();
             node.lexeme = Consume("var", TokenType.KEYWORD);
             node.identifier = IDENT();
             Consume(":", TokenType.SEPARATOR);
@@ -226,7 +226,7 @@ namespace Interpreter
 
         ASTNode ASSIGN()
         {
-            var node = new Assignment();
+            var node = new AssignmentNode();
             node.identifier = IDENT();
             node.lexeme = Consume(":=", TokenType.SEPARATOR);
             node.value = EXPR();
@@ -235,7 +235,7 @@ namespace Interpreter
 
         ASTNode READ()
         {
-            var node = new Read();
+            var node = new ReadNode();
             node.lexeme = Consume("read", TokenType.KEYWORD);
             node.identifierToRead = IDENT();
             return node;
@@ -243,7 +243,7 @@ namespace Interpreter
 
         ASTNode FORLOOP()
         {
-            var node = new ForLoop();
+            var node = new ForLoopNode();
             node.lexeme = Consume("for", TokenType.KEYWORD);
             node.loopVariableIdentifier = IDENT();
             Consume("in", TokenType.KEYWORD);
@@ -284,7 +284,7 @@ namespace Interpreter
 
         ASTNode STMTSTAIL()
         {
-            var node = new Statements();
+            var node = new StatementsNode();
             node.statement = STMT();
             if (node.statement == null)
                 return null; // no more statements found
@@ -295,7 +295,7 @@ namespace Interpreter
 
         ASTNode STMTS()
         {
-            var node = new Statements();
+            var node = new StatementsNode();
             node.statement = STMT();
             if (node.statement == null)
                 return null; // not even a single statement found

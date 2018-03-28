@@ -6,11 +6,13 @@ namespace Interpreter
 {
     class MainClass
     {
+        public static int inputBufferSize = 2;
+
         /*
          * A function used to run the interpreter as a whole
          * with given IO and InputBuffer.
          */
-        public static void Run(IO io, InputBuffer input)
+        public static void Run(IO io, InputBuffer input, bool semanticAnalysis)
         {
             // Lexical analysis
             Lexer lexer = new Lexer(input, io);
@@ -22,17 +24,35 @@ namespace Interpreter
             if (lexer.errored || parser.errored)
                 return; // Parser or lexer had errors, exit
 
-            // Pefrorm semantic analysis
-            Analysis semanticanalysis = new Analysis(ast, io);
-            semanticanalysis.Visit();
-            if (semanticanalysis.errored)
-                return; // Semantic analysis failed, exit
+            if (semanticAnalysis)
+            {
+                // Pefrorm semantic analysis
+                Analysis semanticanalysis = new Analysis(ast, io);
+                semanticanalysis.Visit();
+                if (semanticanalysis.errored)
+                    return; // Semantic analysis failed, exit
+            }
 
             // Run the interpreter
             Interpreter interpreter = new Interpreter(ast, io);
             interpreter.Visit(); // Run interpreter
             if (interpreter.errored)
                 io.WriteLine("Interpreter terminated with errors");
+        }
+
+        public static void Run(IO io, bool semanticAnalysis, params string[] code)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                using (StreamWriter writer = new StreamWriter(stream))
+                {
+                    writer.Write(string.Join(Environment.NewLine, code));
+                    writer.Flush();
+                    stream.Position = 0;
+                    var input = new InputBuffer(stream, inputBufferSize);
+                    Run(io, input, semanticAnalysis);
+                }
+            }
         }
 
         /*
@@ -53,9 +73,8 @@ namespace Interpreter
                 // Try read input file and run with it as the input
                 using (FileStream fileStream = File.Open(args[0], FileMode.Open))
                 {
-                    int bufferSize = 2;
-                    InputBuffer input = new InputBuffer(fileStream, bufferSize);
-                    Run(io, input);
+                    InputBuffer input = new InputBuffer(fileStream, inputBufferSize);
+                    Run(io, input, true);
                 }
             }
             catch (Exception e)

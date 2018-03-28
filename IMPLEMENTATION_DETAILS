@@ -1,6 +1,0 @@
-Default values: int 0, string "", bool false.
-Boolean < operator is defined so that it is true when left operand is false and right operand is true, false otherwise.
-Failing an assert aborts the program and prints an error message.
-For loop control variables are immutable and their immutability is checked during semantic analysis and runtime. An error is raised if immutability is violated.
-Nested comment blocks are accepted, but they must be complete comment blocks, such as /*comment*/.
-

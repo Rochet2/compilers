@@ -38,6 +38,8 @@
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="System.Configuration" />
+    <Reference Include="mscorlib" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -52,12 +54,13 @@
     <Compile Include="sources\Visitor.cs" />
     <Compile Include="sources\ExpressionPrinter.cs" />
     <Compile Include="sources\IO.test.cs" />
-    <Compile Include="sources\ExpressionPrinter.test.cs" />
     <Compile Include="sources\InputBuffer.test.cs" />
     <Compile Include="sources\Lexer.test.cs" />
     <Compile Include="sources\Parser.test.cs" />
-    <Compile Include="sources\Visitor.test.cs" />
     <Compile Include="Program.test.cs" />
+    <Compile Include="sources\Analysis.test.cs" />
+    <Compile Include="sources\Interpreter.test.cs" />
+    <Compile Include="sources\ExpressionPrinter.test.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
