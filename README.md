@@ -93,7 +93,13 @@ Manually tested:
   - NUnit 3.10.1
 
 #### Docker
-- This project has a docker build in docker-hub. See more information for how to use it in https://hub.docker.com/r/rochet2/compilers/
+- This project has a docker build in docker-hub.
+  - Install docker
+  - Get the image with `docker pull rochet2/compilers`
+  - Test the image with `docker run --rm rochet2/compilers`
+  - To run your own code, create a text file, for example `code.txt`
+  - Then create a container with `docker create --name compilers -v $(pwd)/code.txt:/Interpreter/TestCode.txt rochet2/compilers`
+  - Then run the code from the text file with `docker start -i compilers`
 
 #### Environment
 - You must first install the development environment.
