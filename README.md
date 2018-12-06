@@ -92,6 +92,9 @@ Manually tested:
   - MonoDevelop Version 7.4 (build 1035)
   - NUnit 3.10.1
 
+#### Docker
+- This project has a docker build in docker-hub. See more information for how to use it in https://hub.docker.com/r/rochet2/compilers/
+
 #### Environment
 - You must first install the development environment.
   - Mono installation: http://www.mono-project.com/download/stable/
